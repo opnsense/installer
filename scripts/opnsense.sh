@@ -113,9 +113,8 @@ mkdir $BSDINSTALL_TMPETC
 trap true SIGINT	# This section is optional
 
 dialog --backtitle "${PRODUCT_NAME} Installer" \
-    --title "${PRODUCT_NAME} ${PRODUCT_VERSION}" \
-    --ok-label "Ok, let's go." --msgbox "
-Welcome to the ${PRODUCT_NAME} ${PRODUCT_VERSION} installer!
+    --title "Welcome" --ok-label "Ok, let's go." --msgbox \
+"Welcome to the ${PRODUCT_NAME} ${PRODUCT_VERSION} installer!
 
 Before we begin, you will be asked a
 few questions so that this installation
@@ -125,8 +124,7 @@ needs.
 You will then be presented a menu of
 items from which you may select to
 install a new system, with or without
-importing a previous configuration.
-" 0 0
+importing a previous configuration." 0 0
 
 bsdinstall keymap
 
@@ -248,7 +246,7 @@ Exit \"Exit\""
 exec 3>&1
 PARTMODE=`echo $PMODES | xargs dialog --backtitle "${PRODUCT_NAME} Installer" \
 	--title "Select Task" --no-cancel \
-	--menu "How would you like to partition your disk?" \
+	--menu "Choose one of the following tasks to perform." \
 	0 0 0 2>&1 1>&3` || exit 1
 exec 3>&-
 
