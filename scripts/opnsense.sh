@@ -2,6 +2,7 @@
 #-
 # Copyright (c) 2011 Nathan Whitehorn
 # Copyright (c) 2013 Devin Teske
+# Copyright (c) 2019 Franco Fichtner <franco@opnsense.org>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,14 +36,16 @@ f_include $BSDCFG_SHARE/dialog.subr
 
 ############################################################ FUNCTIONS
 
+PRODUCT_NAME="OPNsense"
+PRODUCT_VERSION="19.7"
+
 error() {
 	local msg
 	if [ -n "$1" ]; then
 		msg="$1\n\n"
 	fi
-	test -n "$DISTDIR_IS_UNIONFS" && umount -f $BSDINSTALL_DISTDIR
 	test -f $PATH_FSTAB && bsdinstall umount
-	dialog --backtitle "HardenedBSD Installer" --title "Abort" \
+	dialog --backtitle "${PRODUCT_NAME} Installer" --title "Abort" \
 	    --no-label "Exit" --yes-label "Restart" --yesno \
 	    "${msg}An installation step has been aborted. Would you like to restart the installation or exit the installer?" 0 0
 	if [ $? -ne 0 ]; then
@@ -108,54 +111,26 @@ rm -rf $BSDINSTALL_TMPETC
 mkdir $BSDINSTALL_TMPETC
 
 trap true SIGINT	# This section is optional
+
+dialog --backtitle "${PRODUCT_NAME} Installer" \
+    --title "${PRODUCT_NAME} ${PRODUCT_VERSION}" \
+    --ok-label "Ok, let's go." --msgbox "
+Welcome to the ${PRODUCT_NAME} ${PRODUCT_VERSION} installer!
+
+Before we begin, you will be asked a
+few questions so that this installation
+environment can be set up to suit your
+needs.
+
+You will then be presented a menu of
+items from which you may select to
+install a new system, with or without
+importing a previous configuration.
+" 0 0
+
 bsdinstall keymap
 
 trap error SIGINT	# Catch cntrl-C here
-bsdinstall hostname || error "Set hostname failed"
-
-export DISTRIBUTIONS="base.txz kernel.txz"
-if [ -f $BSDINSTALL_DISTDIR/MANIFEST ]; then
-	DISTMENU=`awk -F'\t' '!/^(kernel\.txz|base\.txz)/{print $1,$5,$6}' $BSDINSTALL_DISTDIR/MANIFEST`
-	DISTMENU="$(echo ${DISTMENU} | sed -E 's/\.txz//g')"
-
-	exec 3>&1
-	EXTRA_DISTS=$( eval dialog \
-	    --backtitle \"HardenedBSD Installer\" \
-	    --title \"Distribution Select\" --nocancel --separate-output \
-	    --checklist \"Choose optional system components to install:\" \
-	    0 0 0 $DISTMENU \
-	2>&1 1>&3 )
-	for dist in $EXTRA_DISTS; do
-		export DISTRIBUTIONS="$DISTRIBUTIONS $dist.txz"
-	done
-fi
-
-LOCAL_DISTRIBUTIONS="MANIFEST"
-FETCH_DISTRIBUTIONS=""
-for dist in $DISTRIBUTIONS; do
-	if [ ! -f $BSDINSTALL_DISTDIR/$dist ]; then
-		FETCH_DISTRIBUTIONS="$FETCH_DISTRIBUTIONS $dist"
-	else
-		LOCAL_DISTRIBUTIONS="$LOCAL_DISTRIBUTIONS $dist"
-	fi
-done
-LOCAL_DISTRIBUTIONS=`echo $LOCAL_DISTRIBUTIONS`	# Trim white space
-FETCH_DISTRIBUTIONS=`echo $FETCH_DISTRIBUTIONS`	# Trim white space
-
-if [ -n "$FETCH_DISTRIBUTIONS" -a -n "$BSDINSTALL_CONFIGCURRENT" ]; then
-	dialog --backtitle "HardenedBSD Installer" --title "Network Installation" --msgbox "Some installation files were not found on the boot volume. The next few screens will allow you to configure networking so that they can be downloaded from the Internet." 0 0
-	bsdinstall netconfig || error
-	NETCONFIG_DONE=yes
-fi
-
-if [ -n "$FETCH_DISTRIBUTIONS" ]; then
-	exec 3>&1
-	BSDINSTALL_DISTSITE=$(`dirname $0`/mirrorselect 2>&1 1>&3)
-	MIRROR_BUTTON=$?
-	exec 3>&-
-	test $MIRROR_BUTTON -eq 0 || error "No mirror selected"
-	export BSDINSTALL_DISTSITE
-fi
 
 rm -f $PATH_FSTAB
 touch $PATH_FSTAB
@@ -254,35 +229,33 @@ if f_interactive; then
 fi
 
 PMODES="\
-\"Auto (UFS)\" \"Guided Disk Setup\" \
-Manual \"Manual Disk Setup (experts)\" \
-Shell \"Open a shell and partition by hand\""
+Guided \"Guided installation\" \
+Manual \"Manual installation\" \
+Import \"Import configuration\" \
+Reset \"Reset Password\" \
+Reboot \"Reboot\" \
+Exit \"Exit\""
 
-CURARCH=$( uname -m )
-case $CURARCH in
-	amd64|arm64|i386)	# Booting ZFS Supported
-		PMODES="$PMODES \"Auto (ZFS)\" \"Guided Root-on-ZFS\""
-		;;
-	*)		# Booting ZFS Unspported
-		;;
-esac
+#CURARCH=$( uname -m )
+#case $CURARCH in
+#	amd64|arm64|i386)	# Booting ZFS Supported
+#		PMODES="$PMODES \"Auto (ZFS)\" \"Guided Root-on-ZFS\""
+#		;;
+#	*)		# Booting ZFS Unspported
+#		;;
+#esac
 
 exec 3>&1
-PARTMODE=`echo $PMODES | xargs dialog --backtitle "HardenedBSD Installer" \
-	--title "Partitioning" \
+PARTMODE=`echo $PMODES | xargs dialog --backtitle "${PRODUCT_NAME} Installer" \
+	--title "Select Task" --no-cancel \
 	--menu "How would you like to partition your disk?" \
 	0 0 0 2>&1 1>&3` || exit 1
 exec 3>&-
 
 case "$PARTMODE" in
-"Auto (UFS)")	# Guided
+"Guided")	# Guided
 	bsdinstall autopart || error "Partitioning error"
 	bsdinstall mount || error "Failed to mount filesystem"
-	;;
-"Shell")	# Shell
-	clear
-	echo "Use this shell to set up partitions for the new system. When finished, mount the system at $BSDINSTALL_CHROOT and place an fstab file for the new system at $PATH_FSTAB. Then type 'exit'. You can also enter the partition editor at any time by entering 'bsdinstall partedit'."
-	sh 2>&1
 	;;
 "Manual")	# Manual
 	if f_isset debugFile; then
@@ -293,171 +266,28 @@ case "$PARTMODE" in
 	fi
 	bsdinstall mount || error "Failed to mount filesystem"
 	;;
-"Auto (ZFS)")	# ZFS
-	bsdinstall zfsboot || error "ZFS setup failed"
-	bsdinstall mount || error "Failed to mount filesystem"
+#"Auto (ZFS)")	# ZFS
+#	bsdinstall zfsboot || error "ZFS setup failed"
+#	bsdinstall mount || error "Failed to mount filesystem"
+#	;;
+"Reboot")
+	# XXX
+	echo reboot
+	exit 0
 	;;
 *)
-	error "Unknown partitioning mode"
+	exit 0
 	;;
 esac
 
-if [ ! -z "$FETCH_DISTRIBUTIONS" ]; then
-	ALL_DISTRIBUTIONS="$DISTRIBUTIONS"
-	WANT_DEBUG=
+# XXX install routines
+# bsdinstall checksum || error "Distribution checksum failed"
+# bsdinstall distextract || error "Distribution extract failed"
+# bsdinstall rootpass || error "Could not set root password"
 
-	# Download to a directory in the new system as scratch space
-	BSDINSTALL_FETCHDEST="$BSDINSTALL_CHROOT/usr/freebsd-dist"
-	mkdir -p "$BSDINSTALL_FETCHDEST" || error "Could not create directory $BSDINSTALL_FETCHDEST"
-
-	export DISTRIBUTIONS="$FETCH_DISTRIBUTIONS"
-	# Try to use any existing distfiles
-	if [ -d $BSDINSTALL_DISTDIR ]; then
-		DISTDIR_IS_UNIONFS=1
-		mount_nullfs -o union "$BSDINSTALL_FETCHDEST" "$BSDINSTALL_DISTDIR"
-	else
-		export DISTRIBUTIONS="$FETCH_DISTRIBUTIONS"
-		export BSDINSTALL_DISTDIR="$BSDINSTALL_FETCHDEST"
-	fi
-
-	export FTP_PASSIVE_MODE=YES
-	# Iterate through the distribution list and set a flag if debugging
-	# distributions have been selected.
-	for _DISTRIBUTION in $DISTRIBUTIONS; do
-		case $_DISTRIBUTION in
-			*-dbg.*)
-				[ -e $BSDINSTALL_DISTDIR/$_DISTRIBUTION ] \
-					&& continue
-				WANT_DEBUG=1
-				DEBUG_LIST="\n$DEBUG_LIST\n$_DISTRIBUTION"
-				;;
-			*)
-				;;
-		esac
-	done
-
-	# Fetch the distributions.
-	bsdinstall distfetch
-	rc=$?
-
-	if [ $rc -ne 0 ]; then
-		# If unable to fetch the remote distributions, recommend
-		# deselecting the debugging distributions, and retrying the
-		# installation, since failure to fetch *-dbg.txz should not
-		# be considered a fatal installation error.
-		msg="Failed to fetch remote distribution"
-		if [ ! -z "$WANT_DEBUG" ]; then
-			# Trim leading and trailing newlines.
-			DEBUG_LIST="${DEBUG_LIST%%\n}"
-			DEBUG_LIST="${DEBUG_LIST##\n}"
-			msg="$msg\n\nPlease deselect the following distributions"
-			msg="$msg and retry the installation:"
-			msg="$msg\n$DEBUG_LIST"
-		fi
-		error "$msg"
-	fi
-	export DISTRIBUTIONS="$ALL_DISTRIBUTIONS"
-fi
-
-if [ ! -z "$LOCAL_DISTRIBUTIONS" ]; then
-	# Download to a directory in the new system as scratch space
-	BSDINSTALL_FETCHDEST="$BSDINSTALL_CHROOT/usr/freebsd-dist"
-	mkdir -p "$BSDINSTALL_FETCHDEST" || error "Could not create directory $BSDINSTALL_FETCHDEST"
-	# Try to use any existing distfiles
-	if [ -d $BSDINSTALL_DISTDIR ]; then
-		DISTDIR_IS_UNIONFS=1
-		mount_nullfs -o union "$BSDINSTALL_FETCHDEST" "$BSDINSTALL_DISTDIR"
-		export BSDINSTALL_DISTDIR="$BSDINSTALL_FETCHDEST"
-	fi
-	env DISTRIBUTIONS="$LOCAL_DISTRIBUTIONS" \
-		BSDINSTALL_DISTSITE="file:///usr/freebsd-dist" \
-		bsdinstall distfetch || \
-		error "Failed to fetch distribution from local media"
-fi
-
-bsdinstall checksum || error "Distribution checksum failed"
-bsdinstall distextract || error "Distribution extract failed"
-bsdinstall rootpass || error "Could not set root password"
-
-trap true SIGINT	# This section is optional
-if [ "$NETCONFIG_DONE" != yes ]; then
-	bsdinstall netconfig	# Don't check for errors -- the user may cancel
-fi
-bsdinstall time
-bsdinstall services
-bsdinstall hardening
-
-dialog --backtitle "HardenedBSD Installer" --title "Add User Accounts" --yesno \
-    "Would you like to add users to the installed system now?" 0 0 && \
-    bsdinstall adduser
-
-finalconfig() {
-	exec 3>&1
-	REVISIT=$(dialog --backtitle "HardenedBSD Installer" \
-	    --title "Final Configuration" --no-cancel --menu \
-	    "Setup of your HardenedBSD system is nearly complete. You can now modify your configuration choices. After this screen, you will have an opportunity to make more complex changes using a shell." 0 0 0 \
-		"Exit" "Apply configuration and exit installer" \
-		"Add User" "Add a user to the system" \
-		"Root Password" "Change root password" \
-		"Hostname" "Set system hostname" \
-		"Network" "Networking configuration" \
-		"Services" "Set daemons to run on startup" \
-		"System Hardening" "Set security options" \
-		"Time Zone" "Set system timezone" \
-		"Handbook" "Install HardenedBSD (FreeBSD) Handbook (requires network)" 2>&1 1>&3)
-	exec 3>&-
-
-	case "$REVISIT" in
-	"Add User")
-		bsdinstall adduser
-		finalconfig
-		;;
-	"Root Password")
-		bsdinstall rootpass
-		finalconfig
-		;;
-	"Hostname")
-		bsdinstall hostname
-		finalconfig
-		;;
-	"Network")
-		bsdinstall netconfig
-		finalconfig
-		;;
-	"Services")
-		bsdinstall services
-		finalconfig
-		;;
-	"System Hardening")
-		bsdinstall hardening
-		finalconfig
-		;;
-	"Time Zone")
-		bsdinstall time
-		finalconfig
-		;;
-	"Handbook")
-		bsdinstall docsinstall
-		finalconfig
-		;;
-	esac
-}
-
-# Allow user to change his mind
-finalconfig
-
-trap error SIGINT	# SIGINT is bad again
 bsdinstall config  || error "Failed to save config"
 
-if [ -n "$DISTDIR_IS_UNIONFS" ]; then
-	umount -f $BSDINSTALL_DISTDIR
-fi
-
-if [ ! -z "$BSDINSTALL_FETCHDEST" ]; then
-	rm -rf "$BSDINSTALL_FETCHDEST"
-fi
-
-dialog --backtitle "HardenedBSD Installer" --title "Manual Configuration" \
+dialog --backtitle "${PRODUCT_NAME} Installer" --title "Manual Configuration" \
     --default-button no --yesno \
    "The installation is now finished. Before exiting the installer, would you like to open a shell in the new system to make any final manual modifications?" 0 0
 if [ $? -eq 0 ]; then
