@@ -1,8 +1,7 @@
 SCRIPTS=opnsense.sh
 MAN=	# not needed
 
-LOCALBASE?=${DESTDIR}/usr/local
-PREFIX?=${LOCALBASE}
+PREFIX?=${DESTDIR}/usr
 
 BINDIR=	${PREFIX}/libexec/bsdinstall
 
