@@ -36,8 +36,8 @@ f_include $BSDCFG_SHARE/dialog.subr
 
 ############################################################ FUNCTIONS
 
-PRODUCT_NAME="OPNsense"
-PRODUCT_VERSION="19.7"
+PRODUCT_NAME=$(opnsense-version -N)
+PRODUCT_VERSION=$(opnsense-version -V)
 
 error() {
 	local msg
