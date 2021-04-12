@@ -58,26 +58,71 @@ usr/src
 var
 "
 
-# XXX /var/log/installer.log
+ALL=0
+
+CPDUP_CUR=0
+CPDUP_MAX=$(echo "${ITEMS}" | wc -l)
+CPDUP_TXT="Cloning current system"
+CPDUP=0
+
+MTREE_TXT="Verifying target system"
+MTREE=0
+
+: > /var/log/installer.log
 
 for ITEM in ${ITEMS}; do
+	CPDUP=$((CPDUP_CUR * 100))
+	CPDUP=$((CPDUP / CPDUP_MAX))
+	ALL=$((CPDUP * 80))
+	ALL=$((ALL / 100))
 	if [ -e /${ITEM} ]; then
+		dialog --backtitle "HardenedBSD Installer" \
+		    --title "Installation Progress" "${@}" \
+		    --mixedgauge "" 0 0 ${ALL} \
+		    "${CPDUP_TXT}" "-${CPDUP}" \
+		    "${MTREE_TXT}" "-${MTREE}"
 		if [ -d /${ITEM} ]; then
 			mkdir -p ${BSDINSTALL_CHROOT}/${ITEM} 2>&1
 		fi
-		cpdup -v /${ITEM} ${BSDINSTALL_CHROOT}/${ITEM} 2>&1 || \
-		    read -p "Press any key to return to menu." WAIT
+		# XXX raise error
+		(cpdup -v /${ITEM} ${BSDINSTALL_CHROOT}/${ITEM} 2>&1) >> /var/log/installer.log
 	fi
+	CPDUP_CUR=$((CPDUP_CUR + 1))
 done
 
-# XXX /var/log/mtree.log
+CPDUP=100
+ALL=80
+
+dialog --backtitle "HardenedBSD Installer" \
+    --title "Installation Progress" "${@}" \
+    --mixedgauge "" 0 0 ${ALL} \
+    "${CPDUP_TXT}" "-${CPDUP}" \
+    "${MTREE_TXT}" "-${MTREE}"
 
 if [ -f /etc/installed_filesystem.mtree ]; then
-	mtree -U -e -q -f /etc/installed_filesystem.mtree -p ${BSDINSTALL_CHROOT}
+	# XXX raise error
+	mtree -U -e -q -f /etc/installed_filesystem.mtree -p ${BSDINSTALL_CHROOT} >> /var/log/installer.log
 	rm ${BSDINSTALL_CHROOT}/etc/installed_filesystem.mtree
 fi
+
+MTREE=100
+ALL=90
+
+dialog --backtitle "HardenedBSD Installer" \
+    --title "Installation Progress" "${@}" \
+    --mixedgauge "" 0 0 ${ALL} \
+    "${CPDUP_TXT}" "-${CPDUP}" \
+    "${MTREE_TXT}" "-${MTREE}"
 
 sync
 
 mount -t devfs devfs ${BSDINSTALL_CHROOT}/dev
 chroot ${BSDINSTALL_CHROOT} /bin/sh /etc/rc.d/ldconfig start
+
+ALL=100
+
+dialog --backtitle "HardenedBSD Installer" \
+    --title "Installation Progress" "${@}" \
+    --mixedgauge "" 0 0 ${ALL} \
+    "${CPDUP_TXT}" "-${CPDUP}" \
+    "${MTREE_TXT}" "-${MTREE}"
