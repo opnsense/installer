@@ -1,5 +1,7 @@
-SCRIPTS=opnsense.sh
-MAN=	# not needed
+SCRIPTS=	opnsense.sh opnsense-import.sh opnsense-install.sh \
+		opnsense-reset.sh opnsense-rootpass.sh
+
+MAN=		# not needed
 
 PREFIX?=${DESTDIR}/usr
 

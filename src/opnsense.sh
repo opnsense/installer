@@ -2,7 +2,7 @@
 #-
 # Copyright (c) 2011 Nathan Whitehorn
 # Copyright (c) 2013 Devin Teske
-# Copyright (c) 2019 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2019-2021 Franco Fichtner <franco@opnsense.org>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $FreeBSD$
-#
 ############################################################ INCLUDES
 
 BSDCFG_SHARE="/usr/share/bsdconfig"
@@ -45,7 +43,7 @@ error() {
 		msg="$1\n\n"
 	fi
 	test -f $PATH_FSTAB && bsdinstall umount
-	dialog --backtitle "${PRODUCT_NAME} Installer" --title "Abort" \
+	dialog --backtitle "HardenedBSD Installer" --title "Abort" \
 	    --no-label "Exit" --yes-label "Restart" --yesno \
 	    "${msg}An installation step has been aborted. Would you like to restart the installation or exit the installer?" 0 0
 	if [ $? -ne 0 ]; then
@@ -112,7 +110,7 @@ mkdir $BSDINSTALL_TMPETC
 
 trap true SIGINT	# This section is optional
 
-dialog --backtitle "${PRODUCT_NAME} Installer" \
+dialog --backtitle "HardenedBSD Installer" \
     --title "Welcome" --ok-label "Ok, let's go." --msgbox \
 "Welcome to the ${PRODUCT_NAME} ${PRODUCT_VERSION} installer!
 
@@ -226,34 +224,42 @@ if f_interactive; then
 	esac
 fi
 
-PMODES="\
-Guided \"Guided installation\" \
-Manual \"Manual installation\" \
-Import \"Import configuration\" \
-Reset \"Reset Password\" \
-Reboot \"Reboot\" \
-Exit \"Exit\""
+CURARCH=$( uname -m )
+case $CURARCH in
+	amd64|arm64|i386)	# Booting ZFS Supported
+		PMODESZFS="\"Auto (ZFS)\" \"Guided Root-on-ZFS\"
+"
+		;;
+	*)		# Booting ZFS Unspported
+		;;
+esac
 
-#CURARCH=$( uname -m )
-#case $CURARCH in
-#	amd64|arm64|i386)	# Booting ZFS Supported
-#		PMODES="$PMODES \"Auto (ZFS)\" \"Guided Root-on-ZFS\""
-#		;;
-#	*)		# Booting ZFS Unspported
-#		;;
-#esac
+PMODES="\
+\"Auto (UFS)\" \"Guided Disk Setup\" \
+${PMODESZFS}Manual \"Manual Disk Setup (experts)\" \
+Import \"Import configuration\" \
+Reset \"Reset password\"
+Reboot \"Reboot system\""
+
+while :; do
 
 exec 3>&1
-PARTMODE=`echo $PMODES | xargs dialog --backtitle "${PRODUCT_NAME} Installer" \
-	--title "Select Task" --no-cancel \
+PARTMODE=`echo $PMODES | xargs dialog --backtitle "HardenedBSD Installer" \
+	--title "Select Task" --cancel-label "Exit" \
 	--menu "Choose one of the following tasks to perform." \
 	0 0 0 2>&1 1>&3` || exit 1
 exec 3>&-
 
 case "$PARTMODE" in
-"Guided")	# Guided
+"Auto (UFS)")	# Guided
 	bsdinstall autopart || error "Partitioning error"
 	bsdinstall mount || error "Failed to mount filesystem"
+	break
+	;;
+"Auto (ZFS)")	# ZFS
+	bsdinstall zfsboot || error "ZFS setup failed"
+	bsdinstall mount || error "Failed to mount filesystem"
+	break
 	;;
 "Manual")	# Manual
 	if f_isset debugFile; then
@@ -263,40 +269,60 @@ case "$PARTMODE" in
 		bsdinstall partedit || error "Partitioning error"
 	fi
 	bsdinstall mount || error "Failed to mount filesystem"
+	break
 	;;
-#"Auto (ZFS)")	# ZFS
-#	bsdinstall zfsboot || error "ZFS setup failed"
-#	bsdinstall mount || error "Failed to mount filesystem"
-#	;;
+"Import")
+	bsdinstall opnsense-import || error "Failed to import configuration"
+	;;
+"Reset")
+	bsdinstall opnsense-reset || error "Failed to import configuration"
+	;;
 "Reboot")
-	# XXX
-	echo reboot
+	# bsdinstaller did this to force a reboot
+	touch /tmp/install_complete
 	exit 0
 	;;
 *)
-	exit 0
+	error "Unknown partitioning mode"
 	;;
 esac
 
-# XXX install routines
-# bsdinstall checksum || error "Distribution checksum failed"
-# bsdinstall distextract || error "Distribution extract failed"
-# bsdinstall rootpass || error "Could not set root password"
+done
 
+bsdinstall opnsense-install || error "Failed to install"
+
+# Set up boot loader
+bsdinstall bootconfig || error "Failed to configure bootloader"
+
+trap true SIGINT	# This section is optional
+
+finalconfig() {
+	exec 3>&1
+	REVISIT=$(dialog --backtitle "HardenedBSD Installer" \
+	    --title "Final Configuration" --no-cancel --menu \
+	    "Setup of your ${PRODUCT_NAME} system is nearly complete. You can now modify your configuration choices." 0 0 0 \
+		"Exit" "Apply configuration and exit installer" \
+		"Root Password" "Change root password" \
+	exec 3>&-
+
+	case "$REVISIT" in
+	"Root Password")
+		bsdinstall opnsense-rootpass
+		finalconfig
+		;;
+	esac
+}
+
+# Allow user to change his mind
+finalconfig
+
+trap error SIGINT	# SIGINT is bad again
 bsdinstall config  || error "Failed to save config"
-
-dialog --backtitle "${PRODUCT_NAME} Installer" --title "Manual Configuration" \
-    --default-button no --yesno \
-   "The installation is now finished. Before exiting the installer, would you like to open a shell in the new system to make any final manual modifications?" 0 0
-if [ $? -eq 0 ]; then
-	clear
-	echo This shell is operating in a chroot in the new system. \
-	    When finished making configuration changes, type \"exit\".
-	chroot "$BSDINSTALL_CHROOT" /bin/sh 2>&1
-fi
 
 bsdinstall entropy
 bsdinstall umount
+
+touch /tmp/install_complete
 
 f_dprintf "Installation Completed at %s" "$( date )"
 
