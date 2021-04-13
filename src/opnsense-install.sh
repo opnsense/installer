@@ -29,6 +29,10 @@ LOGTEMP="/tmp/installer.log"
 
 : > ${LOGFILE}
 
+if mount | awk '{ print $3 }' | grep -q ^${BSDINSTALL_CHROOT}/dev'$'; then
+	(umount ${BSDINSTALL_CHROOT}/dev 2>&1) >> ${LOGFILE}
+fi
+
 fatal()
 {
 	# reverse log to show abort reason on top
@@ -88,6 +92,10 @@ ITEMS=$(for ITEM in ${ITEMS}; do
 	echo "${ITEM}"
 done)
 
+for USRDIR in $(find /usr/local -d 1 -type d); do
+	(mkdir -p ${BSDINSTALL_CHROOT}/${USRDIR} 2>&1) >> ${LOGFILE}
+done
+
 ALL=0
 
 CPDUP_CUR=0
@@ -97,10 +105,6 @@ CPDUP=0
 
 MTREE_TXT="Verifying target system"
 MTREE=0
-
-if mount | awk '{ print $3 }' | grep -q ^${BSDINSTALL_CHROOT}/dev'$'; then
-	umount ${BSDINSTALL_CHROOT}/dev
-fi
 
 dialog --backtitle "HardenedBSD Installer" \
     --title "Installation Progress" "${@}" \
@@ -128,9 +132,6 @@ for ITEM in ${ITEMS}; do
 	fi
 
 	if [ -e /${ITEM} -o -L /${ITEM} ]; then
-		if [ -d /${ITEM} ]; then
-			mkdir -p ${BSDINSTALL_CHROOT}/${ITEM} 2>&1
-		fi
 		if ! (cpdup -v /${ITEM} ${BSDINSTALL_CHROOT}/${ITEM} 2>&1) >> ${LOGFILE}; then
 			fatal
 		fi
