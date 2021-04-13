@@ -24,6 +24,17 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+fatal()
+{
+	# reverse log to show abort reason on top
+	tail -r ${LOGFILE} > ${LOGTMP}
+
+	dialog --clear --backtitle "HardenedBSD Installer" \
+	    --title "Installation Failed" --textbox ${LOGTEMP} 22 77
+
+	exit 1
+}
+
 ITEMS="
 .cshrc
 .profile
@@ -68,7 +79,15 @@ CPDUP=0
 MTREE_TXT="Verifying target system"
 MTREE=0
 
-: > /var/log/installer.log
+LOGFILE="/var/log/installer.log"
+LOGTEMP="/tmp/installer.log"
+
+
+: > ${LOGFILE}
+
+if mount | awk '{ print $3 }' | grep -q ^${BSDINSTALL_CHROOT}/dev'$'; then
+	umount ${BSDINSTALL_CHROOT}/dev
+fi
 
 for ITEM in ${ITEMS}; do
 	CPDUP=$((CPDUP_CUR * 100))
@@ -84,8 +103,9 @@ for ITEM in ${ITEMS}; do
 		if [ -d /${ITEM} ]; then
 			mkdir -p ${BSDINSTALL_CHROOT}/${ITEM} 2>&1
 		fi
-		# XXX raise error
-		(cpdup -v /${ITEM} ${BSDINSTALL_CHROOT}/${ITEM} 2>&1) >> /var/log/installer.log
+		if ! (cpdup -v /${ITEM} ${BSDINSTALL_CHROOT}/${ITEM} 2>&1) >> ${LOGFILE}; then
+			fatal
+		fi
 	fi
 	CPDUP_CUR=$((CPDUP_CUR + 1))
 done
@@ -100,9 +120,10 @@ dialog --backtitle "HardenedBSD Installer" \
     "${MTREE_TXT}" "-${MTREE}"
 
 if [ -f /etc/installed_filesystem.mtree ]; then
-	# XXX raise error
-	mtree -U -e -q -f /etc/installed_filesystem.mtree -p ${BSDINSTALL_CHROOT} >> /var/log/installer.log
 	rm ${BSDINSTALL_CHROOT}/etc/installed_filesystem.mtree
+	if ! (mtree -U -e -q -f /etc/installed_filesystem.mtree -p ${BSDINSTALL_CHROOT} 2>&1) >> ${LOGFILE}; then
+		fatal
+	fi
 fi
 
 MTREE=100
@@ -113,6 +134,8 @@ dialog --backtitle "HardenedBSD Installer" \
     --mixedgauge "" 0 0 ${ALL} \
     "${CPDUP_TXT}" "-${CPDUP}" \
     "${MTREE_TXT}" "-${MTREE}"
+
+cp ${LOGFILE} ${BSDINSTALL_CHROOT}${LOGFILE}
 
 sync
 
