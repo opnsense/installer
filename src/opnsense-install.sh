@@ -36,38 +36,47 @@ fatal()
 }
 
 ITEMS="
-.cshrc
-.profile
-COPYRIGHT
-bin
-boot
-boot.config
-conf
-dev
-etc
-home
-lib
-libexec
-media
-proc
-rescue
-root
-sbin
-sys
-usr/bin
-usr/games
-usr/include
-usr/lib
-usr/lib32
-usr/libdata
-usr/libexec
-usr/local
-usr/obj
-usr/sbin
-usr/share
-usr/src
 var
+usr/src
+usr/share
+usr/sbin
+usr/obj
+%%usr/local%%
+usr/libexec
+usr/libdata
+usr/lib32
+usr/lib
+usr/include
+usr/games
+usr/bin
+sys
+sbin
+root
+rescue
+proc
+media
+libexec
+lib
+home
+etc
+dev
+conf
+boot.config
+boot
+bin
+COPYRIGHT
+.profile
+.cshrc
 "
+
+# expand usr/local so we can measure more accurate progress
+ITEMS=$(for ITEM in ${ITEMS}; do
+	if [ "${ITEM}" = "%%usr/local%%" ]; then
+		# -d 2 is nice in terms of progress but flickers dialog
+		ITEM=$(find /usr/local -d 1 | tail -r)
+	fi
+	echo "${ITEM}"
+done)
 
 ALL=0
 
@@ -81,7 +90,6 @@ MTREE=0
 
 LOGFILE="/var/log/installer.log"
 LOGTEMP="/tmp/installer.log"
-
 
 : > ${LOGFILE}
 
