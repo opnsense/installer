@@ -102,6 +102,12 @@ if mount | awk '{ print $3 }' | grep -q ^${BSDINSTALL_CHROOT}/dev'$'; then
 	umount ${BSDINSTALL_CHROOT}/dev
 fi
 
+dialog --backtitle "HardenedBSD Installer" \
+    --title "Installation Progress" "${@}" \
+    --mixedgauge "" 0 0 ${ALL} \
+    "${CPDUP_TXT}" "-${CPDUP}" \
+    "${MTREE_TXT}" "-${MTREE}"
+
 for ITEM in ${ITEMS}; do
 	CPDUP_LAST=${CPDUP}
 
