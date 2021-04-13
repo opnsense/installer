@@ -24,15 +24,26 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+LOGFILE="/var/log/installer.log"
+LOGTEMP="/tmp/installer.log"
+
+: > ${LOGFILE}
+
 fatal()
 {
 	# reverse log to show abort reason on top
-	tail -r ${LOGFILE} > ${LOGTMP}
+	tail -r ${LOGFILE} > ${LOGTEMP}
 
 	dialog --clear --backtitle "HardenedBSD Installer" \
-	    --title "Installation Failed" --textbox ${LOGTEMP} 22 77
+	    --title "Installation Error" --textbox ${LOGTEMP} 22 77
 
-	exit 1
+	dialog --backtitle "HardenedBSD Installer" --title "Installation Abort" \
+	    --no-label "Abort" --yes-label "Continue" --yesno \
+	    "An installation error occurred. Would you like to attempt to continue the installation anyway?" 0 0
+
+	if [ $? -ne 0 ]; then
+		exit 1
+	fi
 }
 
 ITEMS="
@@ -87,11 +98,6 @@ CPDUP=0
 
 MTREE_TXT="Verifying target system"
 MTREE=0
-
-LOGFILE="/var/log/installer.log"
-LOGTEMP="/tmp/installer.log"
-
-: > ${LOGFILE}
 
 if mount | awk '{ print $3 }' | grep -q ^${BSDINSTALL_CHROOT}/dev'$'; then
 	umount ${BSDINSTALL_CHROOT}/dev
