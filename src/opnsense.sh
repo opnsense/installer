@@ -317,7 +317,6 @@ finalconfig() {
 finalconfig
 
 trap error SIGINT	# SIGINT is bad again
-bsdinstall config  || error "Failed to save config"
 
 bsdinstall entropy
 bsdinstall umount
