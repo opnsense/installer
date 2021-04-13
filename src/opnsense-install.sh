@@ -47,44 +47,43 @@ fatal()
 }
 
 ITEMS="
-var
-usr/src
-usr/share
-usr/sbin
-usr/obj
-%%usr/local%%
-usr/libexec
-usr/libdata
-usr/lib32
-usr/lib
-usr/include
-usr/games
-usr/bin
-sys
-sbin
-root
-rescue
-proc
-media
-libexec
-lib
-home
-etc
-dev
-conf
-boot.config
-boot
-bin
-COPYRIGHT
-.profile
 .cshrc
+.profile
+COPYRIGHT
+bin
+boot
+boot.config
+conf
+dev
+etc
+home
+lib
+libexec
+media
+proc
+rescue
+root
+sbin
+sys
+usr/bin
+usr/games
+usr/include
+usr/lib
+usr/lib32
+usr/libdata
+usr/libexec
+%%usr/local%%
+usr/obj
+usr/sbin
+usr/share
+usr/src
+var
 "
 
 # expand usr/local so we can measure more accurate progress
 ITEMS=$(for ITEM in ${ITEMS}; do
 	if [ "${ITEM}" = "%%usr/local%%" ]; then
-		# -d 2 is nice in terms of progress but flickers dialog
-		ITEM=$(find /usr/local -d 1 | tail -r)
+		ITEM=$(find /usr/local -d 2 | sed 's/^\///')
 	fi
 	echo "${ITEM}"
 done)
@@ -104,16 +103,25 @@ if mount | awk '{ print $3 }' | grep -q ^${BSDINSTALL_CHROOT}/dev'$'; then
 fi
 
 for ITEM in ${ITEMS}; do
+	CPDUP_LAST=${CPDUP}
+
 	CPDUP=$((CPDUP_CUR * 100))
 	CPDUP=$((CPDUP / CPDUP_MAX))
+
 	ALL=$((CPDUP * 80))
 	ALL=$((ALL / 100))
-	if [ -e /${ITEM} ]; then
+
+	CPDUP_CUR=$((CPDUP_CUR + 1))
+
+	if [ "${CPDUP}" != "${CPDUP_LAST}" ]; then
 		dialog --backtitle "HardenedBSD Installer" \
 		    --title "Installation Progress" "${@}" \
 		    --mixedgauge "" 0 0 ${ALL} \
 		    "${CPDUP_TXT}" "-${CPDUP}" \
 		    "${MTREE_TXT}" "-${MTREE}"
+	fi
+
+	if [ -e /${ITEM} -o -L /${ITEM} ]; then
 		if [ -d /${ITEM} ]; then
 			mkdir -p ${BSDINSTALL_CHROOT}/${ITEM} 2>&1
 		fi
@@ -121,8 +129,10 @@ for ITEM in ${ITEMS}; do
 			fatal
 		fi
 	fi
-	CPDUP_CUR=$((CPDUP_CUR + 1))
 done
+
+mkdir -p ${BSDINSTALL_CHROOT}/mnt
+chmod 1777 ${BSDINSTALL_CHROOT}/tmp
 
 CPDUP=100
 ALL=80
