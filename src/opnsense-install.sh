@@ -50,6 +50,15 @@ fatal()
 	fi
 }
 
+progress()
+{
+	dialog --backtitle "HardenedBSD Installer" \
+	    --title "Installation Progress" "${@}" \
+	    --mixedgauge "" 0 0 ${ALL} \
+	    "${CPDUP_TXT}" "-${CPDUP}" \
+	    "${MTREE_TXT}" "-${MTREE}"
+}
+
 ITEMS="
 .cshrc
 .profile
@@ -106,11 +115,7 @@ CPDUP=0
 MTREE_TXT="Verifying target system"
 MTREE=0
 
-dialog --backtitle "HardenedBSD Installer" \
-    --title "Installation Progress" "${@}" \
-    --mixedgauge "" 0 0 ${ALL} \
-    "${CPDUP_TXT}" "-${CPDUP}" \
-    "${MTREE_TXT}" "-${MTREE}"
+progress "${@}"
 
 for ITEM in ${ITEMS}; do
 	CPDUP_LAST=${CPDUP}
@@ -124,11 +129,7 @@ for ITEM in ${ITEMS}; do
 	CPDUP_CUR=$((CPDUP_CUR + 1))
 
 	if [ "${CPDUP}" != "${CPDUP_LAST}" ]; then
-		dialog --backtitle "HardenedBSD Installer" \
-		    --title "Installation Progress" "${@}" \
-		    --mixedgauge "" 0 0 ${ALL} \
-		    "${CPDUP_TXT}" "-${CPDUP}" \
-		    "${MTREE_TXT}" "-${MTREE}"
+		progress "${@}"
 	fi
 
 	if [ -e /${ITEM} -o -L /${ITEM} ]; then
@@ -146,11 +147,7 @@ chmod 1777 ${BSDINSTALL_CHROOT}/tmp
 CPDUP=100
 ALL=80
 
-dialog --backtitle "HardenedBSD Installer" \
-    --title "Installation Progress" "${@}" \
-    --mixedgauge "" 0 0 ${ALL} \
-    "${CPDUP_TXT}" "-${CPDUP}" \
-    "${MTREE_TXT}" "-${MTREE}"
+progress "${@}"
 
 if [ -f /etc/installed_filesystem.mtree ]; then
 	rm ${BSDINSTALL_CHROOT}/etc/installed_filesystem.mtree
@@ -162,11 +159,7 @@ fi
 MTREE=100
 ALL=90
 
-dialog --backtitle "HardenedBSD Installer" \
-    --title "Installation Progress" "${@}" \
-    --mixedgauge "" 0 0 ${ALL} \
-    "${CPDUP_TXT}" "-${CPDUP}" \
-    "${MTREE_TXT}" "-${MTREE}"
+progress "${@}"
 
 cp ${LOGFILE} ${BSDINSTALL_CHROOT}${LOGFILE}
 
@@ -175,10 +168,9 @@ sync
 mount -t devfs devfs ${BSDINSTALL_CHROOT}/dev
 chroot ${BSDINSTALL_CHROOT} /bin/sh /etc/rc.d/ldconfig start
 
+# /boot/loader.conf et al
+chroot ${BSDINSTALL_CHROOT} /usr/local/sbin/pluginctl -s login restart
+
 ALL=100
 
-dialog --backtitle "HardenedBSD Installer" \
-    --title "Installation Progress" "${@}" \
-    --mixedgauge "" 0 0 ${ALL} \
-    "${CPDUP_TXT}" "-${CPDUP}" \
-    "${MTREE_TXT}" "-${MTREE}"
+progress "${@}"
