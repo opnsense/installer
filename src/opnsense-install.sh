@@ -55,8 +55,9 @@ progress()
 	dialog --backtitle "HardenedBSD Installer" \
 	    --title "Installation Progress" "${@}" \
 	    --mixedgauge "" 0 0 ${ALL} \
-	    "${CPDUP_TXT}" "-${CPDUP}" \
-	    "${MTREE_TXT}" "-${MTREE}"
+	    "Cloning current system"    "-${CPDUP}" \
+	    "Verifying resulting files" "-${MTREE}" \
+	    "Setting up target system"  "-${BOOT}"
 }
 
 ITEMS="
@@ -106,13 +107,10 @@ for USRDIR in $(find /usr/local -d 1 -type d); do
 done
 
 ALL=0
-
+BOOT=0
+CPDUP=0
 CPDUP_CUR=0
 CPDUP_MAX=$(echo "${ITEMS}" | wc -l)
-CPDUP_TXT="Cloning current system"
-CPDUP=0
-
-MTREE_TXT="Verifying target system"
 MTREE=0
 
 progress "${@}"
@@ -139,11 +137,6 @@ for ITEM in ${ITEMS}; do
 	fi
 done
 
-cp ${BSDINSTALL_TMPETC}/fstab ${BSDINSTALL_CHROOT}/etc
-
-mkdir -p ${BSDINSTALL_CHROOT}/tmp
-chmod 1777 ${BSDINSTALL_CHROOT}/tmp
-
 CPDUP=100
 ALL=80
 
@@ -165,12 +158,18 @@ cp ${LOGFILE} ${BSDINSTALL_CHROOT}${LOGFILE}
 
 sync
 
-mount -t devfs devfs ${BSDINSTALL_CHROOT}/dev
-chroot ${BSDINSTALL_CHROOT} /bin/sh /etc/rc.d/ldconfig start
+(mount -t devfs devfs ${BSDINSTALL_CHROOT}/dev 2>&1) >> ${LOGFILE}
+(chroot ${BSDINSTALL_CHROOT} /bin/sh /etc/rc.d/ldconfig start 2>&1) >> ${LOGFILE}
+
+cp ${BSDINSTALL_TMPETC}/fstab ${BSDINSTALL_CHROOT}/etc
+
+mkdir -p ${BSDINSTALL_CHROOT}/tmp
+chmod 1777 ${BSDINSTALL_CHROOT}/tmp
 
 # /boot/loader.conf et al
-chroot ${BSDINSTALL_CHROOT} /usr/local/sbin/pluginctl -s login restart
+(chroot ${BSDINSTALL_CHROOT} /usr/local/sbin/pluginctl -s login restart 2>&1) >> ${LOGFILE}
 
 ALL=100
+BOOT=100
 
 progress "${@}"
