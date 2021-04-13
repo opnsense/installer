@@ -138,7 +138,9 @@ for ITEM in ${ITEMS}; do
 	fi
 done
 
-mkdir -p ${BSDINSTALL_CHROOT}/mnt
+cp ${BSDINSTALL_TMPETC}/fstab ${BSDINSTALL_CHROOT}/etc
+
+mkdir -p ${BSDINSTALL_CHROOT}/tmp
 chmod 1777 ${BSDINSTALL_CHROOT}/tmp
 
 CPDUP=100
