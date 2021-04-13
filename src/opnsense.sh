@@ -278,8 +278,7 @@ case "$PARTMODE" in
 	bsdinstall opnsense-reset || error "Failed to import configuration"
 	;;
 "Reboot")
-	# bsdinstaller did this to force a reboot
-	touch /tmp/install_complete
+	# "this is fine"
 	exit 0
 	;;
 *)
@@ -320,8 +319,6 @@ trap error SIGINT	# SIGINT is bad again
 
 bsdinstall entropy
 bsdinstall umount
-
-touch /tmp/install_complete
 
 f_dprintf "Installation Completed at %s" "$( date )"
 
