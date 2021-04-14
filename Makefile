@@ -3,6 +3,15 @@ SUBDIR_TARGETS=	upgrade
 
 .include <bsd.subdir.mk>
 
+SCRIPTS!=	find ${.CURDIR}/src -name "*.sh"
+
+.for SCRIPT in ${SCRIPTS}
+${SCRIPT:C/.*\///:S/.sh//}:
+	@bsdinstall ${@}
+	@sleep 2
+	@clear
+.endfor
+
 mnt:
 	if mount | awk '{ print $$3 }' | grep -q ^/mnt/dev'$$'; then umount /mnt/dev; fi
 	chflags -R noschg /mnt

@@ -57,7 +57,7 @@ progress()
 	    --mixedgauge "" 0 0 ${ALL} \
 	    "Cloning current system"    "-${CPDUP}" \
 	    "Verifying resulting files" "-${MTREE}" \
-	    "Setting up target system"  "-${BOOT}"
+	    "Preparing target system"   "-${BOOT}"
 }
 
 ITEMS="
