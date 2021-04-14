@@ -7,6 +7,7 @@ SCRIPTS!=	find ${.CURDIR}/src -name "*.sh"
 
 .for SCRIPT in ${SCRIPTS}
 ${SCRIPT:C/.*\///:S/.sh//}:
+	@${MAKE} install
 	@bsdinstall ${@}
 	@sleep 2
 	@clear

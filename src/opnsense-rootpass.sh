@@ -24,13 +24,33 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-clear
-echo "HardenedBSD Installer"
-echo "====================="
-echo
+PASS1=$(mktemp /tmp/passwd.XXXXXX)
+PASS2=$(mktemp /tmp/passwd.XXXXXX)
+PASSIN=
+PASSOK=
 
-echo "Please select a password for the system management account (root):"
-echo "Typed characters will not be visible."
-echo
+while [ -z "${PASSIN}" ]; do
+	if ! dialog --backtitle "HardenedBSD Installer" --title "Set Password" --clear --insecure "${@}" \
+	    --passwordbox "Please select a password for the\nsystem management account (root):" 9 40 2> ${PASS1}; then
+	    exit 0
+	fi
+	PASSIN=$(cat ${PASS1})
+done
 
-chroot $BSDINSTALL_CHROOT opnsense-shell password root -h 0 2>&1
+while [ -z "${PASSOK}" ]; do
+	if ! dialog --backtitle "HardenedBSD Installer" --title "Set Password" --clear --insecure "${@}" \
+	    --passwordbox "Please confirm the password for the\nsystem management account (root):" 9 40 2> ${PASS2}; then
+	    exit 0
+	fi
+	PASSOK=$(cat ${PASS2})
+done
+
+if diff -uq ${PASS1} ${PASS2} > /dev/null; then
+	((cat ${PASS1}; echo) | chroot ${BSDINSTALL_CHROOT} /usr/local/sbin/opnsense-shell password root -h 0 > /dev/null)
+else
+	dialog --backtitle "HardenedBSD Installer" --title "Set Password" "${@}" \
+	    --ok-label "Back to menu" \
+	    --msgbox "\nThe entered passwords did not match." 6 40
+fi
+
+rm -f /tmp/passwd.*
