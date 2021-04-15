@@ -24,12 +24,40 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-DEVICES=$(find /dev -d 1 \! -type d)
-DISKS=
+fatal()
+{
+	dialog --backtitle "HardenedBSD Installer" --title "Partitioning Error" \
+	    --ok-label "Back" --msgbox "${1}" 0 0
+	exit 1
+}
 
 SIZE_BOOT=$((512 * 1024))
 SIZE_EFI=$((200 * 1024 * 1024))
+SIZE_MIN=$((4 * 1024 * 1024 * 1024))
 SIZE_SWAP=$((8 * 1024 * 1024 * 1024))
+SIZE_SWAPMIN=$((30 * 1024 * 1024 * 1024))
+
+MEM=$(sysctl -n hw.realmem)
+MEM=$((MEM / 1024 / 1024))
+MEM_MIN=$((2 * 1000)) # a little lower to account for missing pages
+
+if [ ${MEM} -lt ${MEM_MIN} ]; then
+	if ! dialog --backtitle "HardenedBSD Installer" --title "Memory Requirement" \
+	    --yes-label "Ignore" --no-label "Back" --yesno \
+	    "The installer detected only ${MEM}MB of RAM. Since\n
+this is a live image, copying the full file system\n
+to another disk requires at least ${MEM_MIN}MB of RAM\n
+and is generally advised for good operation.\n\n
+If your target disk is greater than $((SIZE_SWAPMIN / 1024 / 1024 / 1024))GB and you\n
+plan to use a swap partition feel free to ignore\n
+this, otherwise adjust your RAM accordingly to\n
+prevent the installation from failing." 0 0; then
+		exit 1
+	fi
+fi
+
+DEVICES=$(find /dev -d 1 \! -type d)
+DISKS=
 
 for DEVICE in ${DEVICES}; do
 	DEVICE=${DEVICE##/dev/}
@@ -43,44 +71,61 @@ for DEVICE in ${DEVICES}; do
 	fi
 done
 
+[ -z "${DISKS}" ] && fatal "No suitable disks found in the system"
+
 SDISKS=
 
 for DISK in ${DISKS}; do
 	eval SIZE=\$${DISK}_size
 	NAME=$(dmesg | grep "^${DISK}:" | head -n 1 | cut -d ' ' -f2-)
-	SDISKS="${SDISK}\"${DISK}\" \"${NAME:-"Unknown disk"} ($((SIZE / 1024 /1024 / 1024))G)\"
+	SDISKS="${SDISK}\"${DISK}\" \"${NAME:-"Unknown disk"} ($((SIZE / 1024 /1024 / 1024))GB)\"
 "
 done
 
 exec 3>&1
 DISK=`echo ${SDISKS} | xargs dialog --backtitle "HardenedBSD Installer" \
-	--title "Select target disk" --cancel-label "Abort" \
-	--menu "Choose one of the following disk to install." \
+	--title "Select Target Disk" --cancel-label "Abort" \
+	--menu "This will run an automated installation using the current settings without asking many questions.\n\n
+WARNING: All contents of the selected hard disk will be erased!\n\n
+Please select a disk to continue:" \
 	0 0 0 2>&1 1>&3` || exit 1
 exec 3>&-
 
 eval SIZE=\$${DISK}_size
 
+[ -z "${SIZE}" ] && fatal "No valid disk was selected"
+[ ${SIZE} -lt ${SIZE_MIN} ] && fatal "The minimum size $((SIZE_MIN / 1024 / 1024 / 1024))GB was not met"
+
+ARGS_SWAP=", auto freebsd-swap"
+SED_SWAP="-e s:/${DISK}p4:/gpt/swapfs:"
+
+if [ ${SIZE} -lt ${SIZE_SWAPMINi} ]; then
+	SIZE_SWAP=0
+elif ! dialog --backtitle "HardenedBSD Installer" --title "Swap Partition" --yesno \
+    "Continue with a recommended swap partition of size $((SIZE_SWAP / 1024 / 1024 / 1024))GB?" 6 40; then
+	SIZE_SWAP=0
+fi
+
+if [ ${SIZE_SWAP} -eq 0 ]; then
+	ARGS_SWAP=
+	SED_SWAP=
+fi
+
 SIZE_ROOT=$((SIZE - SIZE_EFI - SIZE_BOOT - SIZE_SWAP))
 
-# XXX remove swap if disk < 30GB
-# XXX ask for swap otherwise https://github.com/opnsense/bsdinstaller/commit/56e41c1e894
+bsdinstall scriptedpart ${DISK} gpt { ${SIZE_EFI} efi, ${SIZE_BOOT} freebsd-boot, ${SIZE_ROOT} freebsd-ufs /${ARGS_SWAP} } || \
+    fatal "The partition editor run failed"
 
-bsdinstall scriptedpart ${DISK} gpt { ${SIZE_EFI} efi, ${SIZE_BOOT} freebsd-boot, ${SIZE_ROOT} freebsd-ufs /, auto freebsd-swap }
+dd if=/boot/boot1.efifat of=/dev/${DISK}p1 || fatal "EFI boot partition write failed"
+gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 2 ${DISK} || fatal "GPT boot partition write failed"
 
-# XXX only if ok
-
-dd if=/boot/boot1.efifat of=/dev/${DISK}p1
-gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 2 ${DISK}
-
-gpart modify -i 2 -l bootfs ${DISK}
-gpart modify -i 3 -l rootfs ${DISK}
-[ ${SIZE_SWAP} -gt 0 ] && gpart modify -i 4 -l swapfs ${DISK}
-
-SED_SWAP=
-[ ${SIZE_SWAP} -gt 0 ] && SED_SWAP="-e s:/${DISK}p4:/gpt/swapfs:"
+gpart modify -i 2 -l bootfs ${DISK} || fatal "Disk label failed (boot)"
+gpart modify -i 3 -l rootfs ${DISK} || fatal "Disk label failed (root)"
+[ ${SIZE_SWAP} -gt 0 ] && ( gpart modify -i 4 -l swapfs ${DISK} || fatal "Disk label failed (swap)" )
 
 cp ${BSDINSTALL_TMPETC}/fstab ${BSDINSTALL_TMPETC}/fstab.bak
-sed -e "s:/${DISK}p3:/gpt/rootfs:" ${SED_SWAP} \
-    ${BSDINSTALL_TMPETC}/fstab.bak > ${BSDINSTALL_TMPETC}/fstab
+if ! sed -e "s:/${DISK}p3:/gpt/rootfs:" ${SED_SWAP} \
+    ${BSDINSTALL_TMPETC}/fstab.bak > ${BSDINSTALL_TMPETC}/fstab; then
+    fatal "Disk label not replaced"
+fi
 rm ${BSDINSTALL_TMPETC}/fstab.bak
