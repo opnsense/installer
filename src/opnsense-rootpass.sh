@@ -50,7 +50,7 @@ if diff -uq ${PASS1} ${PASS2} > /dev/null; then
 else
 	dialog --backtitle "HardenedBSD Installer" --title "Set Password" "${@}" \
 	    --ok-label "Back to menu" \
-	    --msgbox "\nThe entered passwords did not match." 6 40
+	    --msgbox "The entered passwords did not match." 5 40
 fi
 
 rm -f /tmp/passwd.*
