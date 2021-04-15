@@ -62,6 +62,9 @@ eval SIZE=\$${DISK}_size
 
 SIZE_ROOT=$((SIZE - SIZE_EFI - SIZE_BOOT - SIZE_SWAP))
 
+# XXX remove swap if disk < 30GB
+# XXX ask for swap otherwise https://github.com/opnsense/bsdinstaller/commit/56e41c1e894
+
 bsdinstall scriptedpart ${DISK} gpt { ${SIZE_EFI} efi, ${SIZE_BOOT} freebsd-boot, ${SIZE_ROOT} freebsd-ufs /, auto freebsd-swap }
 
 # XXX only if ok
@@ -69,4 +72,13 @@ bsdinstall scriptedpart ${DISK} gpt { ${SIZE_EFI} efi, ${SIZE_BOOT} freebsd-boot
 dd if=/boot/boot1.efifat of=/dev/${DISK}p1
 gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 2 ${DISK}
 
-# XXX modify labels
+gpart modify -i 2 -l bootfs ${DISK}
+gpart modify -i 3 -l rootfs ${DISK}
+[ ${SIZE_SWAP} -gt 0 ] && gpart modify -i 4 -l swapfs ${DISK}
+
+SED_SWAP="-e 's:/${DISK}p3:/gpt/rootfs'"
+[ ${SIZE_SWAP} -gt 0 ] && SED_SWAP=
+
+cp ${BSDINSTALL_TMPETC}/fstab ${BSDINSTALL_TMPETC}/fstab.bak
+sed -e "s:/${DISK}p3:/gpt/rootfs" ${SED_SWAP} ${BSDINSTALL_TMPETC}/fstab.bak > ${BSDINSTALL_TMPETC}/fstab
+rm ${BSDINSTALL_TMPETC}/fstab.bak
