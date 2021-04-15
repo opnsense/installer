@@ -77,7 +77,7 @@ gpart modify -i 3 -l rootfs ${DISK}
 [ ${SIZE_SWAP} -gt 0 ] && gpart modify -i 4 -l swapfs ${DISK}
 
 SED_SWAP=
-[ ${SIZE_SWAP} -gt 0 ] && SED_SWAP="-e 's:/${DISK}p3:/gpt/rootfs:'"
+[ ${SIZE_SWAP} -gt 0 ] && SED_SWAP="-e s:/${DISK}p4:/gpt/swapfs:"
 
 cp ${BSDINSTALL_TMPETC}/fstab ${BSDINSTALL_TMPETC}/fstab.bak
 sed -e "s:/${DISK}p3:/gpt/rootfs:" ${SED_SWAP} \
