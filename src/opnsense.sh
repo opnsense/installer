@@ -235,6 +235,7 @@ case $CURARCH in
 esac
 
 PMODES="\
+\"Recommended\" \"Guided GPT/UEFI Hybrid\" \
 \"Auto (UFS)\" \"Guided Disk Setup\" \
 ${PMODESZFS}Manual \"Manual Disk Setup (experts)\" \
 Import \"Import configuration\" \
@@ -251,8 +252,13 @@ PARTMODE=`echo $PMODES | xargs dialog --backtitle "HardenedBSD Installer" \
 exec 3>&-
 
 case "$PARTMODE" in
-"Auto (UFS)")	# Guided
+"Recommended")	# Recommended
 	bsdinstall opnsense-ufs || error "Partitioning error"
+	bsdinstall mount || error "Failed to mount filesystem"
+	break
+	;;
+"Auto (UFS)")	# Guided
+	bsdinstall autopart || error "Partitioning error"
 	bsdinstall mount || error "Failed to mount filesystem"
 	break
 	;;
