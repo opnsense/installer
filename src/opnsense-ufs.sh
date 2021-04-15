@@ -47,7 +47,8 @@ SDISKS=
 
 for DISK in ${DISKS}; do
 	eval SIZE=\$${DISK}_size
-	SDISKS="${SDISK}\"${DISK}\" \"${DISK} ($((SIZE / 1024 /1024 / 1024))G)\"
+	NAME=$(dmesg | grep "^${DISK}:" | head -n 1 | cut -d ' ' -f2-)
+	SDISKS="${SDISK}\"${DISK}\" \"${NAME:-"Unknown disk"} ($((SIZE / 1024 /1024 / 1024))G)\"
 "
 done
 
@@ -55,7 +56,7 @@ exec 3>&1
 DISK=`echo ${SDISKS} | xargs dialog --backtitle "HardenedBSD Installer" \
 	--title "Select target disk" --cancel-label "Abort" \
 	--menu "Choose one of the following disk to install." \
-	0 40 0 2>&1 1>&3` || exit 1
+	0 0 0 2>&1 1>&3` || exit 1
 exec 3>&-
 
 eval SIZE=\$${DISK}_size
