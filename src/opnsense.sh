@@ -252,7 +252,7 @@ exec 3>&-
 
 case "$PARTMODE" in
 "Auto (UFS)")	# Guided
-	bsdinstall autopart || error "Partitioning error"
+	bsdinstall opnsense-ufs || error "Partitioning error"
 	bsdinstall mount || error "Failed to mount filesystem"
 	break
 	;;

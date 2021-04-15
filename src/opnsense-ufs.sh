@@ -55,11 +55,11 @@ exec 3>&1
 DISK=`echo ${SDISKS} | xargs dialog --backtitle "HardenedBSD Installer" \
 	--title "Select target disk" --cancel-label "Abort" \
 	--menu "Choose one of the following disk to install." \
-	0 0 0 2>&1 1>&3` || exit 1
+	0 40 0 2>&1 1>&3` || exit 1
 exec 3>&-
 
 eval SIZE=\$${DISK}_size
 
 SIZE_ROOT=$((SIZE - SIZE_EFI - SIZE_BOOT - SIZE_SWAP))
 
-echo bsdinstall scritedpart ${DISK} gpt { ${SIZE_EFI} efi, ${SIZE_BOOT} freebsd-boot, ${SIZE_ROOT} freebsd-ufs /, auto freebsd-swap }
+bsdinstall scriptedpart ${DISK} gpt { ${SIZE_EFI} efi, ${SIZE_BOOT} freebsd-boot, ${SIZE_ROOT} freebsd-ufs /, auto freebsd-swap }
