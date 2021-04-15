@@ -63,3 +63,10 @@ eval SIZE=\$${DISK}_size
 SIZE_ROOT=$((SIZE - SIZE_EFI - SIZE_BOOT - SIZE_SWAP))
 
 bsdinstall scriptedpart ${DISK} gpt { ${SIZE_EFI} efi, ${SIZE_BOOT} freebsd-boot, ${SIZE_ROOT} freebsd-ufs /, auto freebsd-swap }
+
+# XXX only if ok
+
+dd if=/boot/boot1.efifat of=/dev/${DISK}p1
+gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 2 ${DISK}
+
+# XXX modify labels
