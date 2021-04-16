@@ -131,7 +131,7 @@ for ITEM in ${ITEMS}; do
 	fi
 
 	if [ -e /${ITEM} -o -L /${ITEM} ]; then
-		if ! (cpdup -v /${ITEM} ${BSDINSTALL_CHROOT}/${ITEM} 2>&1) >> ${LOGFILE}; then
+		if ! (cpdup -i0 -o -s0 -v /${ITEM} ${BSDINSTALL_CHROOT}/${ITEM} 2>&1) >> ${LOGFILE}; then
 			fatal
 		fi
 	fi
