@@ -27,7 +27,7 @@
 fatal()
 {
 	dialog --backtitle "HardenedBSD Installer" --title "Partitioning Error" \
-	    --ok-label "Back" --msgbox "${1}" 0 0
+	    --ok-label "Back to menu" --msgbox "${1}" 0 0
 	exit 1
 }
 
@@ -43,7 +43,7 @@ MEM_MIN=$((2 * 1000)) # a little lower to account for missing pages
 
 if [ ${MEM} -lt ${MEM_MIN} ]; then
 	if ! dialog --backtitle "HardenedBSD Installer" --title "Memory Requirement" \
-	    --yes-label "Ignore" --no-label "Back" --yesno \
+	    --yes-label "Ignore" --no-label "Back to menu" --yesno \
 	    "The installer detected only ${MEM}MB of RAM. Since\n
 this is a live image, copying the full file system\n
 to another disk requires at least ${MEM_MIN}MB of RAM\n

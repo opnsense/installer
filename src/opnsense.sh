@@ -235,47 +235,66 @@ case $CURARCH in
 esac
 
 PMODES="\
-\"Recommended\" \"Guided GPT/UEFI Hybrid\" \
 \"Auto (UFS)\" \"Guided Disk Setup\" \
-${PMODESZFS}Manual \"Manual Disk Setup (experts)\" \
+${PMODESZFS}Manual \"Manual Disk Setup (experts)\""
+
+CHOICES="\
+\"Recommended (UFS)\" \"${PRODUCT_NAME} GPT/UEFI Hybrid\" \
+\"Other methods\" \"Base installation methods\" \
 Import \"Import configuration\" \
-Reset \"Reset password\"
+Reset \"Reset password\" \
 Reboot \"Reboot system\""
 
 while :; do
 
 exec 3>&1
-PARTMODE=`echo $PMODES | xargs dialog --backtitle "HardenedBSD Installer" \
+CHOICE=`echo ${CHOICES} | xargs dialog --backtitle "HardenedBSD Installer" \
 	--title "Select Task" --cancel-label "Exit" \
 	--menu "Choose one of the following tasks to perform." \
 	0 0 0 2>&1 1>&3` || exit 1
 exec 3>&-
 
-case "$PARTMODE" in
-"Recommended")	# Recommended
+case "${CHOICE}" in
+"Recommended (UFS)")
 	bsdinstall opnsense-ufs || error "Partitioning error"
 	bsdinstall mount || error "Failed to mount filesystem"
 	break
 	;;
-"Auto (UFS)")	# Guided
-	bsdinstall autopart || error "Partitioning error"
-	bsdinstall mount || error "Failed to mount filesystem"
-	break
-	;;
-"Auto (ZFS)")	# ZFS
-	bsdinstall zfsboot || error "ZFS setup failed"
-	bsdinstall mount || error "Failed to mount filesystem"
-	break
-	;;
-"Manual")	# Manual
-	if f_isset debugFile; then
-		# Give partedit the path to our logfile so it can append
-		BSDINSTALL_LOG="${debugFile#+}" bsdinstall partedit || error "Partitioning error"
-	else
-		bsdinstall partedit || error "Partitioning error"
-	fi
-	bsdinstall mount || error "Failed to mount filesystem"
-	break
+"Other methods")
+	exec 3>&1
+	PARTMODE=`echo ${PMODES} | xargs dialog --backtitle "HardenedBSD Installer" \
+	--title "Select Task" --cancel-label "Back to menu" \
+	--menu "Choose one of the following tasks to perform." \
+	0 0 0 2>&1 1>&3` || PARTMODE=Exit
+	exec 3>&-
+
+	case "${PARTMODE}" in
+	"Auto (UFS)")	# Guided
+		bsdinstall autopart || error "Partitioning error"
+		bsdinstall mount || error "Failed to mount filesystem"
+		break
+		;;
+	"Auto (ZFS)")	# ZFS
+		bsdinstall zfsboot || error "ZFS setup failed"
+		bsdinstall mount || error "Failed to mount filesystem"
+		break
+		;;
+	"Manual")	# Manual
+		if f_isset debugFile; then
+			# Give partedit the path to our logfile so it can append
+			BSDINSTALL_LOG="${debugFile#+}" bsdinstall partedit || error "Partitioning error"
+		else
+			bsdinstall partedit || error "Partitioning error"
+		fi
+		bsdinstall mount || error "Failed to mount filesystem"
+		break
+		;;
+	"Exit")
+		;;
+	*)
+		error "Unknown partitioning mode"
+		;;
+	esac
 	;;
 "Import")
 	bsdinstall opnsense-import || error "Failed to import configuration"
@@ -284,11 +303,10 @@ case "$PARTMODE" in
 	bsdinstall opnsense-reset || error "Failed to import configuration"
 	;;
 "Reboot")
-	# "this is fine"
-	exit 0
+	exit 0 # "this is fine"
 	;;
 *)
-	error "Unknown partitioning mode"
+	error "Unknown installer mode"
 	;;
 esac
 
