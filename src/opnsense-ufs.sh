@@ -61,7 +61,7 @@ DISKS=
 
 for DEVICE in ${DEVICES}; do
 	DEVICE=${DEVICE##/dev/}
-	if [ -z "$(echo ${DEVICE} | grep -i "^[a-z][a-z]*[0-9][0-9]*$")" ]; then
+	if [ -z "$(echo ${DEVICE} | grep -ix "[a-z][a-z]*[0-9][0-9]*")" ]; then
 		continue
 	fi
 	if diskinfo ${DEVICE} > /tmp/diskinfo.tmp 2> /dev/null; then

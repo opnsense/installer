@@ -29,7 +29,7 @@ LOGTEMP="/tmp/installer.log"
 
 : > ${LOGFILE}
 
-if mount | awk '{ print $3 }' | grep -q ^${BSDINSTALL_CHROOT}/dev'$'; then
+if mount | awk '{ print $3 }' | grep -qx ${BSDINSTALL_CHROOT}/dev; then
 	(umount ${BSDINSTALL_CHROOT}/dev 2>&1) >> ${LOGFILE}
 fi
 
