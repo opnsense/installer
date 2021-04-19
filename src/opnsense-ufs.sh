@@ -43,7 +43,7 @@ MEM_MIN=$((2 * 1000)) # a little lower to account for missing pages
 
 if [ ${MEM} -lt ${MEM_MIN} ]; then
 	if ! dialog --backtitle "OPNsense Installer" --title "Memory Requirement" \
-	    --yes-label "Ignore" --no-label "Back to menu" --yesno \
+	    --yes-label "Continue anyway" --no-label "Back to menu" --yesno \
 	    "The installer detected only ${MEM}MB of RAM. Since\n
 this is a live image, copying the full file system\n
 to another disk requires at least ${MEM_MIN}MB of RAM\n
@@ -73,17 +73,15 @@ SDISKS=
 
 for DISK in ${DISKS}; do
 	eval SIZE=\$${DISK}_size
-	NAME=$(dmesg | grep "^${DISK}:" | head -n 1 | cut -d ' ' -f2-)
+	NAME="$(dmesg | grep "^${DISK}:" | head -n 1 | cut -d ' ' -f2- | cut -d '>' -f1)>"
 	SDISKS="${SDISK}\"${DISK}\" \"${NAME:-"Unknown disk"} ($((SIZE / 1024 /1024 / 1024))GB)\"
 "
 done
 
 exec 3>&1
 DISK=`echo ${SDISKS} | xargs dialog --backtitle "OPNsense Installer" \
-	--title "Select Target Disk" --cancel-label "Abort" \
-	--menu "This will run an automated installation using the current settings without asking many questions.\n\n
-WARNING: All contents of the selected hard disk will be erased!\n\n
-Please select a disk to continue:" \
+	--title "Select Target Disk" --cancel-label "Back to menu" \
+	--menu "Please select a disk to continue." \
 	0 0 0 2>&1 1>&3` || exit 1
 exec 3>&-
 
