@@ -52,12 +52,20 @@ fatal()
 
 progress()
 {
+	local CPDUPL=${CPDUP}
+	local MTREEL=${MTREE}
+	local BOOTL=${BOOT}
+
+	[ "${CPDUP}" -ge 0 ] && CPDUPL="-${CPDUP}"
+	[ "${MTREE}" -ge 0 ] && MTREEL="-${MTREE}"
+	[ "${BOOTL}" -ge 0 ] && BOOTL="-${BOOT}"
+
 	dialog --backtitle "OPNsense Installer" \
 	    --title "Installation Progress" "${@}" \
 	    --mixedgauge "" 0 0 ${ALL} \
-	    "Cloning current system"    "-${CPDUP}" \
-	    "Verifying resulting files" "-${MTREE}" \
-	    "Preparing target system"   "-${BOOT}"
+	    "Cloning current system"    "${CPDUPL}" \
+	    "Verifying resulting files" "${MTREEL}" \
+	    "Preparing target system"   "${BOOTL}"
 }
 
 ITEMS="
@@ -107,11 +115,11 @@ for USRDIR in $(find /usr/local -d 1 -type d); do
 done
 
 ALL=0
-BOOT=0
+BOOT=Waiting
 CPDUP=0
 CPDUP_CUR=0
 CPDUP_MAX=$(echo "${ITEMS}" | wc -l)
-MTREE=0
+MTREE=Waiting
 
 progress "${@}"
 
@@ -139,6 +147,7 @@ done
 
 CPDUP=100
 ALL=80
+MTREE=Running
 
 progress "${@}"
 
@@ -149,7 +158,8 @@ if [ -f /etc/installed_filesystem.mtree ]; then
 	fi
 fi
 
-MTREE=100
+MTREE=Completed
+BOOT=Running
 ALL=90
 
 progress "${@}"
@@ -170,6 +180,6 @@ chmod 1777 ${BSDINSTALL_CHROOT}/tmp
 (chroot ${BSDINSTALL_CHROOT} /usr/local/sbin/pluginctl -s login restart 2>&1) >> ${LOGFILE}
 
 ALL=100
-BOOT=100
+BOOT=Completed
 
 progress "${@}"
