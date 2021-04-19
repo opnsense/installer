@@ -110,20 +110,6 @@ mkdir $BSDINSTALL_TMPETC
 
 trap true SIGINT	# This section is optional
 
-dialog --backtitle "OPNsense Installer" \
-    --title "Welcome" --ok-label "Ok, let's go." --msgbox \
-"Welcome to the ${PRODUCT_NAME} ${PRODUCT_VERSION} installer!
-
-Before we begin, you will be asked a
-few questions so that this installation
-environment can be set up to suit your
-needs.
-
-You will then be presented a menu of
-items from which you may select to
-install a new system, with or without
-importing a previous configuration." 0 0
-
 bsdinstall keymap
 
 trap error SIGINT	# Catch cntrl-C here
@@ -252,7 +238,8 @@ while :; do
 exec 3>&1
 CHOICE=`echo ${CHOICES} | xargs dialog --backtitle "OPNsense Installer" \
 	--title "Select Task" --cancel-label "Exit" \
-	--menu "Choose one of the following tasks to perform." \
+	--menu "Welcome to the ${PRODUCT_NAME} ${PRODUCT_VERSION} installer.\n\n
+Choose one of the following tasks to perform." \
 	0 0 0 2>&1 1>&3` || exit 1
 exec 3>&-
 
