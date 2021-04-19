@@ -109,7 +109,7 @@ SIZE_ROOT=$((SIZE - SIZE_EFI - SIZE_BOOT - SIZE_SWAP))
 
 if ! dialog --backtitle "OPNsense Installer" --title "UFS Configuration" \
     --yes-label YES --no-label NO --yesno \
-    "Last Chance! Are you sure you wan to destroy the current contents of the following disks:\n\n	${DISK}" 7 40; then
+    "Last Chance! Are you sure you wan to destroy the current contents of the following disks:\n\n        ${DISK}" 0 0; then
 	exit 1
 fi
 
