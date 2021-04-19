@@ -26,8 +26,8 @@
 
 fatal()
 {
-	dialog --backtitle "OPNsense Installer" --title "Partitioning Error" \
-	    --ok-label "Back to menu" --msgbox "${1}" 0 0
+	dialog --backtitle "OPNsense Installer" --title "UFS Configuration" \
+	    --ok-label "Cancel" --msgbox "${1}" 0 0
 	exit 1
 }
 
@@ -42,8 +42,8 @@ MEM=$((MEM / 1024 / 1024))
 MEM_MIN=$((2 * 1000)) # a little lower to account for missing pages
 
 if [ ${MEM} -lt ${MEM_MIN} ]; then
-	if ! dialog --backtitle "OPNsense Installer" --title "Memory Requirement" \
-	    --yes-label "Continue anyway" --no-label "Back to menu" --yesno \
+	if ! dialog --backtitle "OPNsense Installer" --title "UFS Configuration" \
+	    --yes-label "Continue anyway" --no-label "Cancel" --yesno \
 	    "The installer detected only ${MEM}MB of RAM. Since\n
 this is a live image, copying the full file system\n
 to another disk requires at least ${MEM_MIN}MB of RAM\n
@@ -80,7 +80,7 @@ done
 
 exec 3>&1
 DISK=`echo ${SDISKS} | xargs dialog --backtitle "OPNsense Installer" \
-	--title "Select Target Disk" --cancel-label "Back to menu" \
+	--title "UFS Configuration" --cancel-label "Cancel" \
 	--menu "Please select a disk to continue." \
 	0 0 0 2>&1 1>&3` || exit 1
 exec 3>&-
@@ -95,7 +95,7 @@ SED_SWAP="-e s:/${DISK}p4:/gpt/swapfs:"
 
 if [ ${SIZE} -lt ${SIZE_SWAPMIN} ]; then
 	SIZE_SWAP=0
-elif ! dialog --backtitle "OPNsense Installer" --title "Swap Partition" --yesno \
+elif ! dialog --backtitle "OPNsense Installer" --title "UFS Configuration" --yesno \
     "Continue with a recommended swap partition of size $((SIZE_SWAP / 1024 / 1024 / 1024))GB?" 6 40; then
 	SIZE_SWAP=0
 fi
@@ -107,15 +107,17 @@ fi
 
 SIZE_ROOT=$((SIZE - SIZE_EFI - SIZE_BOOT - SIZE_SWAP))
 
+# XXX ask one more time
+
 bsdinstall scriptedpart ${DISK} gpt { ${SIZE_EFI} efi, ${SIZE_BOOT} freebsd-boot, ${SIZE_ROOT} freebsd-ufs /${ARGS_SWAP} } || \
     fatal "The partition editor run failed"
 
 dd if=/boot/boot1.efifat of=/dev/${DISK}p1 || fatal "EFI boot partition write failed"
-gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 2 ${DISK} || fatal "GPT boot partition write failed"
+gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 2 ${DISK} > /dev/null || fatal "GPT boot partition write failed"
 
-gpart modify -i 2 -l bootfs ${DISK} || fatal "Disk label failed (boot)"
-gpart modify -i 3 -l rootfs ${DISK} || fatal "Disk label failed (root)"
-[ ${SIZE_SWAP} -gt 0 ] && ( gpart modify -i 4 -l swapfs ${DISK} || fatal "Disk label failed (swap)" )
+gpart modify -i 2 -l bootfs ${DISK} > /dev/null || fatal "Disk label failed (boot)"
+gpart modify -i 3 -l rootfs ${DISK} > /dev/null || fatal "Disk label failed (root)"
+[ ${SIZE_SWAP} -gt 0 ] && ( gpart modify -i 4 -l swapfs ${DISK} > /dev/null || fatal "Disk label failed (swap)" )
 
 cp ${BSDINSTALL_TMPETC}/fstab ${BSDINSTALL_TMPETC}/fstab.bak
 if ! sed -e "s:/${DISK}p3:/gpt/rootfs:" ${SED_SWAP} \
