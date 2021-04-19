@@ -147,7 +147,7 @@ done
 
 CPDUP=100
 ALL=80
-MTREE=Running
+MTREE="In Progress"
 
 progress "${@}"
 
@@ -159,7 +159,7 @@ if [ -f /etc/installed_filesystem.mtree ]; then
 fi
 
 MTREE=Completed
-BOOT=Running
+BOOT="In Progress"
 ALL=90
 
 progress "${@}"
