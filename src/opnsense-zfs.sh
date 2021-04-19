@@ -120,7 +120,7 @@ f_include $BSDCFG_SHARE/variable.subr
 # How much swap to put on each block device in the boot zpool
 # NOTE: Value passed to gpart(8); which supports SI unit suffixes.
 #
-: ${ZFSBOOT_SWAP_SIZE:=2g}
+: ${ZFSBOOT_SWAP_SIZE:=8g}
 
 #
 # Should we use geli(8) to encrypt the swap?
@@ -1610,9 +1610,11 @@ while :; do
 		retval=$DIALOG_OK
 		mtag=">>> $msg_install"
 	else
-		dialog_menu_main
-		retval=$?
-		f_dialog_menutag_fetch mtag
+		retval=$DIALOG_OK
+		mtag=">>> $msg_install"
+		#dialog_menu_main
+		#retval=$?
+		#f_dialog_menutag_fetch mtag
 	fi
 
 	f_dprintf "retval=%u mtag=[%s]" $retval "$mtag"
