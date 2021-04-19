@@ -1636,7 +1636,7 @@ while :; do
 		# Validate vdev type against number of disks selected/scripted
 		# (also validates that ZFSBOOT_DISKS are real [probed] disks)
 		# NB: dialog_menu_layout supports running non-interactively
-		dialog_menu_layout || continue
+		dialog_menu_layout || return $FAILURE
 
 		# Make sure each disk will have room for ZFS
 		if f_expand_number "$ZFSBOOT_SWAP_SIZE" swapsize &&
