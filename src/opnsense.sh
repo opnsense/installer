@@ -228,7 +228,7 @@ ${PMODESZFS}Manual \"Manual Disk Setup (experts)\""
 
 CHOICES="\
 \"Install (UFS)\" \"UFS GPT/UEFI hybrid\" \
-${CHOICESZFS}\"Other modes\" \"Extended install\" \
+${CHOICESZFS}\"Other modes\" \"Extended installation\" \
 Import \"Import configuration\" \
 Reset \"Reset password\" \
 Reboot \"Reboot system\""
