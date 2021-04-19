@@ -99,7 +99,7 @@ eval SIZE=\$${DISK}_size
 ARGS_SWAP=", auto freebsd-swap"
 SED_SWAP="-e s:/${DISK}p4:/gpt/swapfs:"
 
-if [ ${SIZE} -lt ${SIZE_SWAPMINi} ]; then
+if [ ${SIZE} -lt ${SIZE_SWAPMIN} ]; then
 	SIZE_SWAP=0
 elif ! dialog --backtitle "HardenedBSD Installer" --title "Swap Partition" --yesno \
     "Continue with a recommended swap partition of size $((SIZE_SWAP / 1024 / 1024 / 1024))GB?" 6 40; then
