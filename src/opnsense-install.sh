@@ -115,11 +115,11 @@ for USRDIR in $(find /usr/local -d 1 -type d); do
 done
 
 ALL=0
-BOOT=Waiting
+BOOT=
 CPDUP=0
 CPDUP_CUR=0
 CPDUP_MAX=$(echo "${ITEMS}" | wc -l)
-MTREE=Waiting
+MTREE=
 
 progress "${@}"
 
