@@ -107,7 +107,10 @@ fi
 
 SIZE_ROOT=$((SIZE - SIZE_EFI - SIZE_BOOT - SIZE_SWAP))
 
-# XXX ask one more time
+if ! dialog --backtitle "OPNsense Installer" --title "UFS Configuration" --yesno \
+    "Do you want to erase all contents of disk ${DISK}?" 6 40; then
+	exit 1
+fi
 
 bsdinstall scriptedpart ${DISK} gpt { ${SIZE_EFI} efi, ${SIZE_BOOT} freebsd-boot, ${SIZE_ROOT} freebsd-ufs /${ARGS_SWAP} } || \
     fatal "The partition editor run failed"
