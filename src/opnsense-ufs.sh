@@ -43,7 +43,7 @@ MEM_MIN=$((2 * 1000)) # a little lower to account for missing pages
 
 if [ ${MEM} -lt ${MEM_MIN} ]; then
 	if ! dialog --backtitle "OPNsense Installer" --title "UFS Configuration" \
-	    --yes-label "Continue anyway" --no-label "Cancel" --yesno \
+	    --yes-label "Proceed anyway" --no-label "Cancel" --yesno \
 	    "The installer detected only ${MEM}MB of RAM. Since\n
 this is a live image, copying the full file system\n
 to another disk requires at least ${MEM_MIN}MB of RAM\n
