@@ -30,7 +30,7 @@ PASSIN=
 PASSOK=
 
 while [ -z "${PASSIN}" ]; do
-	if ! dialog --backtitle "HardenedBSD Installer" --title "Set Password" --clear --insecure "${@}" \
+	if ! dialog --backtitle "OPNsense Installer" --title "Set Password" --clear --insecure "${@}" \
 	    --passwordbox "Please select a password for the\nsystem management account (root):" 9 40 2> ${PASS1}; then
 	    exit 0
 	fi
@@ -38,7 +38,7 @@ while [ -z "${PASSIN}" ]; do
 done
 
 while [ -z "${PASSOK}" ]; do
-	if ! dialog --backtitle "HardenedBSD Installer" --title "Set Password" --clear --insecure "${@}" \
+	if ! dialog --backtitle "OPNsense Installer" --title "Set Password" --clear --insecure "${@}" \
 	    --passwordbox "Please confirm the password for the\nsystem management account (root):" 9 40 2> ${PASS2}; then
 	    exit 0
 	fi
@@ -48,7 +48,7 @@ done
 if diff -uq ${PASS1} ${PASS2} > /dev/null; then
 	((cat ${PASS1}; echo) | chroot ${BSDINSTALL_CHROOT} /usr/local/sbin/opnsense-shell password root -h 0 > /dev/null)
 else
-	dialog --backtitle "HardenedBSD Installer" --title "Set Password" "${@}" \
+	dialog --backtitle "OPNsense Installer" --title "Set Password" "${@}" \
 	    --ok-label "Back to menu" \
 	    --msgbox "The entered passwords did not match." 5 40
 fi

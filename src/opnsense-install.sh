@@ -38,10 +38,10 @@ fatal()
 	# reverse log to show abort reason on top
 	tail -r ${LOGFILE} > ${LOGTEMP}
 
-	dialog --clear --backtitle "HardenedBSD Installer" \
+	dialog --clear --backtitle "OPNsense Installer" \
 	    --title "Installation Error" --textbox ${LOGTEMP} 22 77
 
-	dialog --backtitle "HardenedBSD Installer" --title "Installation Abort" \
+	dialog --backtitle "OPNsense Installer" --title "Installation Abort" \
 	    --no-label "Abort" --yes-label "Continue" --yesno \
 	    "An installation error occurred. Would you like to attempt to continue the installation anyway?" 0 0
 
@@ -52,7 +52,7 @@ fatal()
 
 progress()
 {
-	dialog --backtitle "HardenedBSD Installer" \
+	dialog --backtitle "OPNsense Installer" \
 	    --title "Installation Progress" "${@}" \
 	    --mixedgauge "" 0 0 ${ALL} \
 	    "Cloning current system"    "-${CPDUP}" \

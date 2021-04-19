@@ -25,7 +25,7 @@
 # SUCH DAMAGE.
 
 clear
-echo "HardenedBSD Installer"
-echo "====================="
+echo "OPNsense Installer"
+echo "=================="
 
 opnsense-importer 2>&1

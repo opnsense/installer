@@ -43,7 +43,7 @@ error() {
 		msg="$1\n\n"
 	fi
 	test -f $PATH_FSTAB && bsdinstall umount
-	dialog --backtitle "HardenedBSD Installer" --title "Abort" \
+	dialog --backtitle "OPNsense Installer" --title "Abort" \
 	    --no-label "Exit" --yes-label "Restart" --yesno \
 	    "${msg}An installation step has been aborted. Would you like to restart the installation or exit the installer?" 0 0
 	if [ $? -ne 0 ]; then
@@ -110,7 +110,7 @@ mkdir $BSDINSTALL_TMPETC
 
 trap true SIGINT	# This section is optional
 
-dialog --backtitle "HardenedBSD Installer" \
+dialog --backtitle "OPNsense Installer" \
     --title "Welcome" --ok-label "Ok, let's go." --msgbox \
 "Welcome to the ${PRODUCT_NAME} ${PRODUCT_VERSION} installer!
 
@@ -248,7 +248,7 @@ Reboot \"Reboot system\""
 while :; do
 
 exec 3>&1
-CHOICE=`echo ${CHOICES} | xargs dialog --backtitle "HardenedBSD Installer" \
+CHOICE=`echo ${CHOICES} | xargs dialog --backtitle "OPNsense Installer" \
 	--title "Select Task" --cancel-label "Exit" \
 	--menu "Choose one of the following tasks to perform." \
 	0 0 0 2>&1 1>&3` || exit 1
@@ -262,7 +262,7 @@ case "${CHOICE}" in
 	;;
 "Other methods")
 	exec 3>&1
-	PARTMODE=`echo ${PMODES} | xargs dialog --backtitle "HardenedBSD Installer" \
+	PARTMODE=`echo ${PMODES} | xargs dialog --backtitle "OPNsense Installer" \
 	--title "Select Task" --cancel-label "Back to menu" \
 	--menu "Choose one of the following tasks to perform." \
 	0 0 0 2>&1 1>&3` || PARTMODE=Exit
@@ -321,7 +321,7 @@ trap true SIGINT	# This section is optional
 
 finalconfig() {
 	exec 3>&1
-	REVISIT=$(dialog --backtitle "HardenedBSD Installer" \
+	REVISIT=$(dialog --backtitle "OPNsense Installer" \
 	    --title "Final Configuration" --no-cancel --menu \
 	    "Setup of your ${PRODUCT_NAME} system is nearly complete. You can now modify your configuration choices." 0 0 0 \
 		"Exit" "Apply configuration and exit installer" \

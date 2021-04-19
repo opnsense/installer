@@ -26,7 +26,7 @@
 
 fatal()
 {
-	dialog --backtitle "HardenedBSD Installer" --title "Partitioning Error" \
+	dialog --backtitle "OPNsense Installer" --title "Partitioning Error" \
 	    --ok-label "Back to menu" --msgbox "${1}" 0 0
 	exit 1
 }
@@ -42,7 +42,7 @@ MEM=$((MEM / 1024 / 1024))
 MEM_MIN=$((2 * 1000)) # a little lower to account for missing pages
 
 if [ ${MEM} -lt ${MEM_MIN} ]; then
-	if ! dialog --backtitle "HardenedBSD Installer" --title "Memory Requirement" \
+	if ! dialog --backtitle "OPNsense Installer" --title "Memory Requirement" \
 	    --yes-label "Ignore" --no-label "Back to menu" --yesno \
 	    "The installer detected only ${MEM}MB of RAM. Since\n
 this is a live image, copying the full file system\n
@@ -83,7 +83,7 @@ for DISK in ${DISKS}; do
 done
 
 exec 3>&1
-DISK=`echo ${SDISKS} | xargs dialog --backtitle "HardenedBSD Installer" \
+DISK=`echo ${SDISKS} | xargs dialog --backtitle "OPNsense Installer" \
 	--title "Select Target Disk" --cancel-label "Abort" \
 	--menu "This will run an automated installation using the current settings without asking many questions.\n\n
 WARNING: All contents of the selected hard disk will be erased!\n\n
@@ -101,7 +101,7 @@ SED_SWAP="-e s:/${DISK}p4:/gpt/swapfs:"
 
 if [ ${SIZE} -lt ${SIZE_SWAPMIN} ]; then
 	SIZE_SWAP=0
-elif ! dialog --backtitle "HardenedBSD Installer" --title "Swap Partition" --yesno \
+elif ! dialog --backtitle "OPNsense Installer" --title "Swap Partition" --yesno \
     "Continue with a recommended swap partition of size $((SIZE_SWAP / 1024 / 1024 / 1024))GB?" 6 40; then
 	SIZE_SWAP=0
 fi
