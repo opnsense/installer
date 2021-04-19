@@ -215,7 +215,7 @@ case $CURARCH in
 	amd64|arm64|i386)	# Booting ZFS Supported
 		PMODESZFS="\"Auto (ZFS)\" \"Guided Root-on-ZFS\"
 "
-		CHOICESZFS="\"Standard (ZFS)\" \"ZFS GPT/UEFI Hybrid\"
+		CHOICESZFS="\"Standard (ZFS)\" \"ZFS GPT/UEFI hybrid\"
 "
 		;;
 	*)		# Booting ZFS Unspported
@@ -227,7 +227,7 @@ PMODES="\
 ${PMODESZFS}Manual \"Manual Disk Setup (experts)\""
 
 CHOICES="\
-\"Standard (UFS)\" \"UFS GPT/UEFI Hybrid\" \
+\"Standard (UFS)\" \"UFS GPT/UEFI hybrid\" \
 ${CHOICESZFS}\"Other methods\" \"Advanced installations\" \
 Import \"Import configuration\" \
 Reset \"Reset password\" \
