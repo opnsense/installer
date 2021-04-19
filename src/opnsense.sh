@@ -228,7 +228,7 @@ ${PMODESZFS}Manual \"Manual Disk Setup (experts)\""
 
 CHOICES="\
 \"Install (UFS)\" \"UFS GPT/UEFI hybrid\" \
-${CHOICESZFS}\"Other install\" \"Advanced methods\" \
+${CHOICESZFS}\"Other modes\" \"Extended install\" \
 Import \"Import configuration\" \
 Reset \"Reset password\" \
 Reboot \"Reboot system\""
@@ -253,7 +253,7 @@ case "${CHOICE}" in
 	bsdinstall mount || error "Failed to mount filesystem"
 	break
 	;;
-"Other methods")
+"Other modes")
 	exec 3>&1
 	PARTMODE=`echo ${PMODES} | xargs dialog --backtitle "OPNsense Installer" \
 	--title "Select Task" --cancel-label "Back" \
