@@ -231,7 +231,7 @@ CHOICES="\
 ${CHOICESZFS}\"Other modes\" \"Extended installation\" \
 Import \"Import previous config\" \
 Reset \"Reset previous password\" \
-Reboot \"Reboot system\""
+Reboot \"Reboot this system\""
 
 while :; do
 
