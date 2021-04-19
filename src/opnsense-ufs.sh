@@ -47,11 +47,7 @@ if [ ${MEM} -lt ${MEM_MIN} ]; then
 	    "The installer detected only ${MEM}MB of RAM. Since\n
 this is a live image, copying the full file system\n
 to another disk requires at least ${MEM_MIN}MB of RAM\n
-and is generally advised for good operation.\n\n
-If your target disk is greater than $((SIZE_SWAPMIN / 1024 / 1024 / 1024))GB and you\n
-plan to use a swap partition feel free to ignore\n
-this, otherwise adjust your RAM accordingly to\n
-prevent the installation from failing." 0 0; then
+and is generally advised for good operation." 0 0; then
 		exit 1
 	fi
 fi

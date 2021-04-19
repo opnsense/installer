@@ -237,9 +237,8 @@ while :; do
 
 exec 3>&1
 CHOICE=`echo ${CHOICES} | xargs dialog --backtitle "OPNsense Installer" \
-	--title "Select Task" --cancel-label "Exit" \
-	--menu "Welcome to the ${PRODUCT_NAME} ${PRODUCT_VERSION} installer.\n\n
-Choose one of the following tasks to perform." \
+	--title "${PRODUCT_NAME} ${PRODUCT_VERSION}" --cancel-label "Exit" \
+	--menu "Choose one of the following tasks to perform." \
 	0 0 0 2>&1 1>&3` || exit 1
 exec 3>&-
 
