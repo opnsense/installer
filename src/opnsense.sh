@@ -215,7 +215,7 @@ case $CURARCH in
 	amd64|arm64|i386)	# Booting ZFS Supported
 		PMODESZFS="\"Auto (ZFS)\" \"Guided Root-on-ZFS\"
 "
-		CHOICESZFS="\"Recommended (ZFS)\" \"${PRODUCT_NAME} GPT/UEFI Hybrid\"
+		CHOICESZFS="\"Standard (ZFS)\" \"GPT/UEFI Hybrid\"
 "
 		;;
 	*)		# Booting ZFS Unspported
@@ -227,8 +227,8 @@ PMODES="\
 ${PMODESZFS}Manual \"Manual Disk Setup (experts)\""
 
 CHOICES="\
-\"Recommended (UFS)\" \"${PRODUCT_NAME} GPT/UEFI Hybrid\" \
-${CHOICESZFS}\"Other methods\" \"Base installation methods\" \
+\"Standard (UFS)\" \"GPT/UEFI Hybrid\" \
+${CHOICESZFS}\"Other methods\" \"Advanced installations\" \
 Import \"Import configuration\" \
 Reset \"Reset password\" \
 Reboot \"Reboot system\""
@@ -243,12 +243,12 @@ CHOICE=`echo ${CHOICES} | xargs dialog --backtitle "OPNsense Installer" \
 exec 3>&-
 
 case "${CHOICE}" in
-"Recommended (UFS)")
+"Standard (UFS)")
 	bsdinstall opnsense-ufs || error "Partitioning error"
 	bsdinstall mount || error "Failed to mount filesystem"
 	break
 	;;
-"Recommended (ZFS)")
+"Standard (ZFS)")
 	bsdinstall opnsense-zfs || error "Partitioning error"
 	bsdinstall mount || error "Failed to mount filesystem"
 	break
