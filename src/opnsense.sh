@@ -215,7 +215,7 @@ case $CURARCH in
 	amd64|arm64|i386)	# Booting ZFS Supported
 		PMODESZFS="\"Auto (ZFS)\" \"Guided Root-on-ZFS\"
 "
-		CHOICESZFS="\"Standard (ZFS)\" \"ZFS GPT/UEFI hybrid\"
+		CHOICESZFS="\"Install (ZFS)\" \"ZFS GPT/UEFI hybrid\"
 "
 		;;
 	*)		# Booting ZFS Unspported
@@ -227,8 +227,8 @@ PMODES="\
 ${PMODESZFS}Manual \"Manual Disk Setup (experts)\""
 
 CHOICES="\
-\"Standard (UFS)\" \"UFS GPT/UEFI hybrid\" \
-${CHOICESZFS}\"Other methods\" \"Advanced installations\" \
+\"Install (UFS)\" \"UFS GPT/UEFI hybrid\" \
+${CHOICESZFS}\"Other install\" \"Advanced methods\" \
 Import \"Import configuration\" \
 Reset \"Reset password\" \
 Reboot \"Reboot system\""
@@ -243,12 +243,12 @@ CHOICE=`echo ${CHOICES} | xargs dialog --backtitle "OPNsense Installer" \
 exec 3>&-
 
 case "${CHOICE}" in
-"Standard (UFS)")
+"Install (UFS)")
 	bsdinstall opnsense-ufs || error "Partitioning error"
 	bsdinstall mount || error "Failed to mount filesystem"
 	break
 	;;
-"Standard (ZFS)")
+"Install (ZFS)")
 	bsdinstall opnsense-zfs || error "Partitioning error"
 	bsdinstall mount || error "Failed to mount filesystem"
 	break
@@ -256,7 +256,7 @@ case "${CHOICE}" in
 "Other methods")
 	exec 3>&1
 	PARTMODE=`echo ${PMODES} | xargs dialog --backtitle "OPNsense Installer" \
-	--title "Select Task" --cancel-label "Back to menu" \
+	--title "Select Task" --cancel-label "Back" \
 	--menu "Choose one of the following tasks to perform." \
 	0 0 0 2>&1 1>&3` || PARTMODE=Exit
 	exec 3>&-

@@ -49,8 +49,7 @@ if diff -uq ${PASS1} ${PASS2} > /dev/null; then
 	((cat ${PASS1}; echo) | chroot ${BSDINSTALL_CHROOT} /usr/local/sbin/opnsense-shell password root -h 0 > /dev/null)
 else
 	dialog --backtitle "OPNsense Installer" --title "Set Password" "${@}" \
-	    --ok-label "Back to menu" \
-	    --msgbox "The entered passwords did not match." 5 40
+	    --ok-label "Back" --msgbox "The entered passwords did not match." 5 40
 fi
 
 rm -f /tmp/passwd.*
