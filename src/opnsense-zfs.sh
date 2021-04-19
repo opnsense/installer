@@ -1582,16 +1582,9 @@ arm64)
 	: ${ZFSBOOT_PARTITION_SCHEME:=GPT}
 	;;
 *)
-	# If the system was booted with UEFI, set the default boot type to UEFI
-	bootmethod=$( sysctl -n machdep.bootmethod )
-	f_dprintf "machdep.bootmethod=[%s]" "$bootmethod"
-	if [ "$bootmethod" = "UEFI" ]; then
-		: ${ZFSBOOT_BOOT_TYPE:=BIOS+UEFI}
-		: ${ZFSBOOT_PARTITION_SCHEME:=GPT}
-	else
-		: ${ZFSBOOT_BOOT_TYPE:=BIOS}
-		: ${ZFSBOOT_PARTITION_SCHEME:=GPT}
-	fi
+	# We use BIOS+UEFI for maximum compatibility
+	: ${ZFSBOOT_BOOT_TYPE:=BIOS+UEFI}
+	: ${ZFSBOOT_PARTITION_SCHEME:=GPT}
 	;;
 esac
 
