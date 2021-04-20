@@ -110,7 +110,8 @@ mkdir $BSDINSTALL_TMPETC
 
 trap true SIGINT	# This section is optional
 
-bsdinstall keymap
+[ -z "${BSDINSTALL_KEYMAP_DONE}" ] && bsdinstall keymap
+export BSDINSTALL_KEYMAP_DONE=1
 
 trap error SIGINT	# Catch cntrl-C here
 
