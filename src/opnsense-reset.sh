@@ -24,4 +24,52 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-# XXX select disk and run through password reset
+. /usr/libexec/bsdinstall/opnsense.subr || exit 1
+
+opnsense_load_disks
+
+PASS1=$(mktemp /tmp/passwd.XXXXXX)
+PASS2=$(mktemp /tmp/passwd.XXXXXX)
+PASSIN=
+PASSOK=
+
+[ -z "${OPNSENSE_SDISKS}${OPNSENSE_SPOOLS}" ] && opnsense_fatal "Reset Password" "No suitable disks found in the system"
+
+exec 3>&1
+DISK=`echo ${OPNSENSE_SDISKS} ${OPNSENSE_SPOOLS} | xargs dialog --backtitle "OPNsense Installer" \
+	--title "Reset Password" --cancel-label "Cancel" \
+	--menu "Please select a disk to continue." \
+	0 0 0 2>&1 1>&3` || exit 1
+exec 3>&-
+
+[ -z "${DISK}" ] && opnsense_fatal "Reset Password" "No valid disk was selected"
+
+while [ -z "${PASSIN}" ]; do
+	if ! dialog --backtitle "OPNsense Installer" --title "Set Password" --clear --insecure "${@}" \
+	    --passwordbox "Please select a password for the\nsystem management account (root):" 9 40 2> ${PASS1}; then
+	    exit 0
+	fi
+	PASSIN=$(cat ${PASS1})
+done
+
+while [ -z "${PASSOK}" ]; do
+	if ! dialog --backtitle "OPNsense Installer" --title "Set Password" --clear --insecure "${@}" \
+	    --passwordbox "Please confirm the password for the\nsystem management account (root):" 9 40 2> ${PASS2}; then
+	    exit 0
+	fi
+	PASSOK=$(cat ${PASS2})
+done
+
+if diff -uq ${PASS1} ${PASS2} > /dev/null; then
+	# XXX needs testing
+	if (cat ${PASS1}; echo) | opnsense-importer -p ${DISK} 2>&1; then
+		opnsense_info "Reset Password" "Password reset completed"
+	else
+		opnsense_fatal "Reset Password" "Password reset failed"
+	fi
+else
+	dialog --backtitle "OPNsense Installer" --title "Set Password" "${@}" \
+	    --ok-label "Back" --msgbox "The entered passwords did not match." 5 40
+fi
+
+rm -f /tmp/passwd.*

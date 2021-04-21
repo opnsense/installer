@@ -65,7 +65,10 @@ opnsense_load_disks()
 	export OPNSENSE_SDISKS # disk menu
 	export OPNSENSE_DISKS # raw disks
 
-	for ZFSPOOL in ZFSPOOLS=$(if [ -x "${OPNSENSE_IMPORTER}" ]; then ${OPNSENSE_IMPORTER} -z; fi); do
+	OPNSENSE_SPOOLS=
+	OPNSENSE_POOLS=
+
+	for ZFSPOOL in $(if [ -x "${OPNSENSE_IMPORTER}" ]; then ${OPNSENSE_IMPORTER} -z; fi); do
 		OPNSENSE_POOLS="${OPNSENSE_POOLS} ${ZFSPOOL}"
 		# XXX can support size?
 		OPNSENSE_SPOOLS="${OPNSENSE_SPOOLS}\"${ZFSPOOL}\" \"<ZFS Pool>\"
