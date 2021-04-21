@@ -216,7 +216,7 @@ case $CURARCH in
 	amd64|arm64|i386)	# Booting ZFS Supported
 		PMODESZFS="\"Auto (ZFS)\" \"Guided Root-on-ZFS\"
 "
-		CHOICESZFS="\"Install (ZFS)\" \"ZFS GPT/UEFI hybrid\"
+		CHOICESZFS="\"Install (ZFS)\" \"ZFS GPT/UEFI Hybrid\"
 "
 		;;
 	*)		# Booting ZFS Unspported
@@ -228,11 +228,11 @@ PMODES="\
 ${PMODESZFS}Manual \"Manual Disk Setup (experts)\""
 
 CHOICES="\
-\"Install (UFS)\" \"UFS GPT/UEFI hybrid\" \
-${CHOICESZFS}\"Other Modes >\" \"Extended installation\" \
-Import \"Import configuration\" \
-\"Password Reset\" \"Recover installation\" \
-\"Force Reboot\" \"Reboot this system\""
+\"Install (UFS)\" \"UFS GPT/UEFI Hybrid\" \
+\"Import Config\" \"Load Configuration\" \
+\"Password Reset\" \"Recover Installation\" \
+${CHOICESZFS}\"Other Modes >\" \"Extended Installation\" \
+\"Force Reboot\" \"Reboot System\""
 
 while :; do
 
@@ -290,7 +290,7 @@ case "${CHOICE}" in
 		;;
 	esac
 	;;
-"Import")
+"Import Config")
 	bsdinstall opnsense-import
 	;;
 "Password Reset")
