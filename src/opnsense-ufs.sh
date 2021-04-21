@@ -24,18 +24,14 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+. /usr/libexec/bsdinstall/opnsense.subr || exit 1
+
 fatal()
 {
 	dialog --backtitle "OPNsense Installer" --title "UFS Configuration" \
 	    --ok-label "Cancel" --msgbox "${1}" 0 0
 	exit 1
 }
-
-SIZE_BOOT=$((512 * 1024))
-SIZE_EFI=$((200 * 1024 * 1024))
-SIZE_MIN=$((4 * 1024 * 1024 * 1024))
-SIZE_SWAP=$((8 * 1024 * 1024 * 1024))
-SIZE_SWAPMIN=$((30 * 1024 * 1024 * 1024))
 
 MEM=$(sysctl -n hw.realmem)
 MEM=$((MEM / 1024 / 1024))
@@ -52,34 +48,12 @@ and is generally advised for good operation." 0 0; then
 	fi
 fi
 
-DEVICES=$(find /dev -d 1 \! -type d)
-DISKS=
+opnsense_load_disks
 
-for DEVICE in ${DEVICES}; do
-	DEVICE=${DEVICE##/dev/}
-	if [ -z "$(echo ${DEVICE} | grep -ix "[a-z][a-z]*[0-9][0-9]*")" ]; then
-		continue
-	fi
-	if diskinfo ${DEVICE} > /tmp/diskinfo.tmp 2> /dev/null; then
-		SIZE=$(cat /tmp/diskinfo.tmp | awk '{ print $3 }')
-		eval "${DEVICE}_size=${SIZE}"
-		DISKS="${DISKS} ${DEVICE}"
-	fi
-done
-
-[ -z "${DISKS}" ] && fatal "No suitable disks found in the system"
-
-SDISKS=
-
-for DISK in ${DISKS}; do
-	eval SIZE=\$${DISK}_size
-	NAME="$(dmesg | grep "^${DISK}:" | head -n 1 | cut -d ' ' -f2- | cut -d '>' -f1)>"
-	SDISKS="${SDISK}\"${DISK}\" \"${NAME:-"Unknown disk"} ($((SIZE / 1024 /1024 / 1024))GB)\"
-"
-done
+[ -z "${OPNSENSE_SDISKS}" ] && fatal "No suitable disks found in the system"
 
 exec 3>&1
-DISK=`echo ${SDISKS} | xargs dialog --backtitle "OPNsense Installer" \
+DISK=`echo ${OPNSENSE_SDISKS} | xargs dialog --backtitle "OPNsense Installer" \
 	--title "UFS Configuration" --cancel-label "Cancel" \
 	--menu "Please select a disk to continue." \
 	0 0 0 2>&1 1>&3` || exit 1
