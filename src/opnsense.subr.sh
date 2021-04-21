@@ -67,7 +67,24 @@ opnsense_load_disks()
 
 	for ZFSPOOL in ZFSPOOLS=$(if [ -x "${OPNSENSE_IMPORTER}" ]; then ${OPNSENSE_IMPORTER} -z; fi); do
 		OPNSENSE_POOLS="${OPNSENSE_POOLS} ${ZFSPOOL}"
+		# XXX can support size?
+		OPNSENSE_SPOOLS="${OPNSENSE_SPOOLS}\"${ZFSPOOL}\" \"<ZFS Pool>\"
+"
 	done
 
+	export OPNSENSE_SPOOLS # zfs pool menu
 	export OPNSENSE_POOLS # raw zfs pools
+}
+
+opnsense_info()
+{
+	dialog --backtitle "OPNsense Installer" --title "${1}" \
+	    --msgbox "${2}" 0 0
+}
+
+opnsense_fatal()
+{
+	dialog --backtitle "OPNsense Installer" --title "${1}" \
+	    --ok-label "Cancel" --msgbox "${2}" 0 0
+	exit 1
 }
