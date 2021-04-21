@@ -45,7 +45,7 @@ exec 3>&-
 [ -z "${DISK}" ] && opnsense_fatal "Reset Password" "No valid disk was selected"
 
 while [ -z "${PASSIN}" ]; do
-	if ! dialog --backtitle "OPNsense Installer" --title "Set Password" --clear --insecure "${@}" \
+	if ! dialog --backtitle "OPNsense Installer" --title "Reset Password" --clear --insecure "${@}" \
 	    --passwordbox "Please select a password for the\nsystem management account (root):" 9 40 2> ${PASS1}; then
 	    exit 0
 	fi
@@ -53,7 +53,7 @@ while [ -z "${PASSIN}" ]; do
 done
 
 while [ -z "${PASSOK}" ]; do
-	if ! dialog --backtitle "OPNsense Installer" --title "Set Password" --clear --insecure "${@}" \
+	if ! dialog --backtitle "OPNsense Installer" --title "Reset Password" --clear --insecure "${@}" \
 	    --passwordbox "Please confirm the password for the\nsystem management account (root):" 9 40 2> ${PASS2}; then
 	    exit 0
 	fi
@@ -68,7 +68,7 @@ if diff -uq ${PASS1} ${PASS2} > /dev/null; then
 		opnsense_fatal "Reset Password" "Password reset failed"
 	fi
 else
-	dialog --backtitle "OPNsense Installer" --title "Set Password" "${@}" \
+	dialog --backtitle "OPNsense Installer" --title "Reset Password" "${@}" \
 	    --ok-label "Back" --msgbox "The entered passwords did not match." 5 40
 fi
 

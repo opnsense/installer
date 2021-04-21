@@ -229,10 +229,10 @@ ${PMODESZFS}Manual \"Manual Disk Setup (experts)\""
 
 CHOICES="\
 \"Install (UFS)\" \"UFS GPT/UEFI hybrid\" \
-${CHOICESZFS}\"Other modes\" \"Extended installation\" \
+${CHOICESZFS}\"> Other Modes\" \"Extended installation\" \
 Import \"Import previous config\" \
 Reset \"Reset previous password\" \
-Reboot \"Reboot this system\""
+\"Force Reboot\" \"Reboot this system\""
 
 while :; do
 
@@ -254,7 +254,7 @@ case "${CHOICE}" in
 	bsdinstall mount || error "Failed to mount filesystem"
 	break
 	;;
-"Other modes")
+"> Other Modes")
 	exec 3>&1
 	PARTMODE=`echo ${PMODES} | xargs dialog --backtitle "OPNsense Installer" \
 	--title "Select Task" --cancel-label "Back" \
@@ -291,12 +291,12 @@ case "${CHOICE}" in
 	esac
 	;;
 "Import")
-	bsdinstall opnsense-import || error "Failed to import configuration"
+	bsdinstall opnsense-import
 	;;
 "Reset")
-	bsdinstall opnsense-reset || error "Failed to import configuration"
+	bsdinstall opnsense-reset
 	;;
-"Reboot")
+"Force Reboot")
 	exit 0 # "this is fine"
 	;;
 *)
