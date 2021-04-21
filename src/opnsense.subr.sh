@@ -30,13 +30,14 @@ SIZE_MIN=$((4 * 1024 * 1024 * 1024))
 SIZE_SWAP=$((8 * 1024 * 1024 * 1024))
 SIZE_SWAPMIN=$((30 * 1024 * 1024 * 1024))
 
+OPNSENSE_IMPORTER="/usr/local/sbin/opnsense-importer"
+
 opnsense_load_disks()
 {
-	DEVICES=$(find /dev -d 1 \! -type d)
 	OPNSENSE_SDISKS=
 	OPNSENSE_DISKS=
 
-	for DEVICE in ${DEVICES}; do
+	for DEVICE in $(find /dev -d 1 \! -type d); do
 		DEVICE=${DEVICE##/dev/}
 
 		if [ -z "$(echo ${DEVICE} | grep -ix "[a-z][a-z]*[0-9][0-9]*")" ]; then
@@ -63,4 +64,10 @@ opnsense_load_disks()
 
 	export OPNSENSE_SDISKS # disk menu
 	export OPNSENSE_DISKS # raw disks
+
+	for ZFSPOOL in ZFSPOOLS=$(if [ -x "${OPNSENSE_IMPORTER}" ]; then ${OPNSENSE_IMPORTER} -z; fi); do
+		OPNSENSE_POOLS="${OPNSENSE_POOLS} ${ZFSPOOL}"
+	done
+
+	export OPNSENSE_POOLS # raw zfs pools
 }
