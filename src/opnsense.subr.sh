@@ -34,6 +34,8 @@ OPNSENSE_IMPORTER="/usr/local/sbin/opnsense-importer"
 
 opnsense_load_disks()
 {
+	set -x
+
 	OPNSENSE_SDISKS=
 	OPNSENSE_DISKS=
 
@@ -77,6 +79,9 @@ opnsense_load_disks()
 
 	export OPNSENSE_SPOOLS # zfs pool menu
 	export OPNSENSE_POOLS # raw zfs pools
+
+	echo -n "Press any key to continue"
+	read YN
 }
 
 opnsense_info()
