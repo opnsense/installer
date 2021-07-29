@@ -44,6 +44,10 @@ opnsense_load_disks()
 			continue
 		fi
 
+		if [ -n "$(echo ${DEVICE} | grep -i "^tty")" ]; then
+			continue
+		fi
+
 		if diskinfo ${DEVICE} > /tmp/diskinfo.tmp 2> /dev/null; then
 			SIZE=$(cat /tmp/diskinfo.tmp | awk '{ print $3 }')
 			eval "export ${DEVICE}_size=${SIZE}"
