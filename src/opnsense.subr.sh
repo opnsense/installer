@@ -62,7 +62,7 @@ opnsense_load_disks()
 	for DISK in ${OPNSENSE_DISKS}; do
 		eval SIZE=\$${DISK}_size
 		eval NAME=\$${DISK}_name
-		OPNSENSE_SDISKS="${OPNSENSE_SDISK}\"${DISK}\" \"<${NAME}> ($((SIZE / 1024 /1024 / 1024))GB)\"
+		OPNSENSE_SDISKS="${OPNSENSE_SDISKS}\"${DISK}\" \"<${NAME}> ($((SIZE / 1024 /1024 / 1024))GB)\"
 "
 	done
 
