@@ -61,8 +61,7 @@ while [ -z "${PASSOK}" ]; do
 done
 
 if diff -uq ${PASS1} ${PASS2} > /dev/null; then
-	# XXX needs testing
-	if (cat ${PASS1}; echo) | opnsense-importer -p ${DISK} 2>&1; then
+	if (cat ${PASS1}; echo) | ${OPNSENSE_IMPORTER} -p ${DISK} 2>&1; then
 		opnsense_info "Reset Password" "Password reset completed"
 	else
 		opnsense_fatal "Reset Password" "Password reset failed"

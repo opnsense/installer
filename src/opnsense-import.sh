@@ -39,7 +39,7 @@ exec 3>&-
 
 [ -z "${DISK}" ] && opnsense_fatal "Import Configuration" "No valid disk was selected"
 
-if opnsense-importer ${DISK} 2>&1; then
+if ${OPNSENSE_IMPORTER} ${DISK} 2>&1; then
 	opnsense_info "Import Configuration" "Configuration import completed"
 else
 	opnsense_fatal "Import Configuration" "Configuration import failed"
