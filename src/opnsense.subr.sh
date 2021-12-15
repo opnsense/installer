@@ -72,10 +72,14 @@ opnsense_load_disks()
 	OPNSENSE_SPOOLS=
 	OPNSENSE_POOLS=
 
-	for ZFSPOOL in $(if [ -x "${OPNSENSE_IMPORTER}" ]; then ${OPNSENSE_IMPORTER} -z; fi); do
-		OPNSENSE_POOLS="${OPNSENSE_POOLS} ${ZFSPOOL}"
-		# XXX can support size?
-		OPNSENSE_SPOOLS="${OPNSENSE_SPOOLS}\"${ZFSPOOL}\" \"<ZFS Pool>\"
+	ZFSPOOLS=$(${OPNSENSE_IMPORTER} -z | tr ' ' ',')
+
+	for ZFSPOOL in ${ZFSPOOLS}; do
+		ZFSNAME=$(echo ${ZFSPOOL} | awk -F, '{ print $1 }')
+		ZFSGUID=$(echo ${ZFSPOOL} | awk -F, '{ print $2 }')
+		ZFSSIZE=$(echo ${ZFSPOOL} | awk -F, '{ print $3 }')
+		OPNSENSE_POOLS="${OPNSENSE_POOLS} ${ZFSNAME}"
+		OPNSENSE_SPOOLS="${OPNSENSE_SPOOLS}\"${ZFSNAME}\" \"<${ZFSGUID}> (${ZFSSIZE})\"
 "
 	done
 
