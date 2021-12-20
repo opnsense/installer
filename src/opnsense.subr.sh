@@ -52,7 +52,7 @@ opnsense_load_disks()
 			SIZE=$(cat /tmp/diskinfo.tmp | awk '{ print $3 }')
 			eval "export ${DEVICE}_size=${SIZE}"
 
-			NAME=$(dmesg | grep "^${DEVICE}:" | head -n 1 | cut -d ' ' -f2- | tr -d '<' | cut -d '>' -f1)
+			NAME=$(dmesg | grep "^${DEVICE}:" | head -n 1 | cut -d ' ' -f2- | tr -d '<' | cut -d '>' -f1 | tr -cd "[:alnum:][:space:]")
 			eval "export ${DEVICE}_name=\"${NAME:-Unknown disk}\""
 
 			OPNSENSE_DISKS="${OPNSENSE_DISKS} ${DEVICE}"
