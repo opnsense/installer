@@ -50,18 +50,18 @@ opnsense_load_disks()
 
 		if diskinfo ${DEVICE} > /tmp/diskinfo.tmp 2> /dev/null; then
 			SIZE=$(cat /tmp/diskinfo.tmp | awk '{ print $3 }')
-			eval "export ${DEVICE}_size=${SIZE}"
+			eval export ${DEVICE}_size='${SIZE}'
 
 			NAME=$(dmesg | grep "^${DEVICE}:" | head -n 1 | cut -d ' ' -f2- | tr -d '<' | cut -d '>' -f1 | tr -cd "[:alnum:][:space:]")
-			eval "export ${DEVICE}_name=\"${NAME:-Unknown disk}\""
+			eval export ${DEVICE}_name='${NAME:-Unknown disk}'
 
 			OPNSENSE_DISKS="${OPNSENSE_DISKS} ${DEVICE}"
 		fi
 	done
 
 	for DISK in ${OPNSENSE_DISKS}; do
-		eval SIZE=\$${DISK}_size
-		eval NAME=\$${DISK}_name
+		eval SIZE="\$${DISK}_size"
+		eval NAME="\$${DISK}_name"
 		OPNSENSE_SDISKS="${OPNSENSE_SDISKS}\"${DISK}\" \"<${NAME}> ($((SIZE / 1024 /1024 / 1024))GB)\"
 "
 	done
