@@ -366,7 +366,7 @@ trap error SIGINT	# SIGINT is bad again
 # Only handle keymap here as we try to achieve the other
 # requirements via automatic config generation at runtime
 if [ -f $BSDINSTALL_TMPETC/rc.conf.keymap ]; then
-	cat $BSDINSTALL_TMPETC/rc.conf.keymap > $BSDINSTALL_TMPETC/rc.conf
+	cat $BSDINSTALL_TMPETC/rc.conf.keymap > $BSDINSTALL_CHROOT/etc/rc.conf
 fi
 
 bsdinstall entropy
