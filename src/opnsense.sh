@@ -345,9 +345,9 @@ finalconfig() {
 	exec 3>&1
 	REVISIT=$(dialog --backtitle "OPNsense Installer" \
 	    --title "Final Configuration" --no-cancel --menu \
-	    "Setup of your ${PRODUCT_NAME} system is nearly complete. You can now modify your configuration choices." 0 0 0 \
+	    "Setup of your ${PRODUCT_NAME} system is nearly complete." 0 0 0 \
 		"Root Password" "Change root password" \
-		"Exit" "Apply configuration and exit installer" 2>&1 1>&3)
+		"Exit Installer" "Exit and reboot" 2>&1 1>&3)
 	exec 3>&-
 
 	case "$REVISIT" in
