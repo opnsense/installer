@@ -1,6 +1,6 @@
 #!/bin/sh
 #-
-# Copyright (c) 2021 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2021-2022 Franco Fichtner <franco@opnsense.org>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -90,15 +90,15 @@ fi
 bsdinstall scriptedpart ${DISK} gpt { ${SIZE_EFI} efi, ${SIZE_BOOT} freebsd-boot, ${SIZE_ROOT} freebsd-ufs /${ARGS_SWAP} } || \
     fatal "The partition editor run failed"
 
-dd if=/boot/boot1.efifat of=/dev/${DISK}p1 || fatal "EFI boot partition write failed"
 gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 2 ${DISK} > /dev/null || fatal "GPT boot partition write failed"
 
+gpart modify -i 1 -l efifs ${DISK} > /dev/null || fatal "Disk label failed (efi)"
 gpart modify -i 2 -l bootfs ${DISK} > /dev/null || fatal "Disk label failed (boot)"
 gpart modify -i 3 -l rootfs ${DISK} > /dev/null || fatal "Disk label failed (root)"
 [ ${SIZE_SWAP} -gt 0 ] && ( gpart modify -i 4 -l swapfs ${DISK} > /dev/null || fatal "Disk label failed (swap)" )
 
 cp ${BSDINSTALL_TMPETC}/fstab ${BSDINSTALL_TMPETC}/fstab.bak
-if ! sed -e "s:/${DISK}p3:/gpt/rootfs:" ${SED_SWAP} \
+if ! sed -e "s:/${DISK}p3:/gpt/rootfs:" -e "s:/${DISK}p1:/gpt/efifs:" ${SED_SWAP} \
     ${BSDINSTALL_TMPETC}/fstab.bak > ${BSDINSTALL_TMPETC}/fstab; then
     fatal "Disk label not replaced"
 fi
