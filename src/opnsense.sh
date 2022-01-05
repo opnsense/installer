@@ -241,7 +241,7 @@ fi
 
 CURARCH=$( uname -m )
 case $CURARCH in
-	amd64|arm64|i386)	# Booting ZFS Supported
+	amd64|arm64|i386|riscv)	# Booting ZFS Supported
 		PMODESZFS="\"Auto (ZFS)\" \"Guided Root-on-ZFS\"
 "
 		CHOICESZFS="\"Install (ZFS)\" \"ZFS GPT/UEFI Hybrid\"
