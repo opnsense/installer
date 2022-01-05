@@ -45,7 +45,7 @@ while [ -z "${PASSOK}" ]; do
 	PASSOK=$(cat ${PASS2})
 done
 
-if diff -uq ${PASS1} ${PASS2} > /dev/null; then
+if diff -q ${PASS1} ${PASS2}; then
 	((cat ${PASS1}; echo) | chroot ${BSDINSTALL_CHROOT} /usr/local/sbin/opnsense-shell password root -h 0 > /dev/null)
 else
 	dialog --backtitle "OPNsense Installer" --title "Set Password" "${@}" \

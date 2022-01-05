@@ -60,7 +60,7 @@ while [ -z "${PASSOK}" ]; do
 	PASSOK=$(cat ${PASS2})
 done
 
-if diff -uq ${PASS1} ${PASS2} > /dev/null; then
+if diff -q ${PASS1} ${PASS2}; then
 	if (cat ${PASS1}; echo) | ${OPNSENSE_IMPORTER} -p ${DISK} 2>&1; then
 		opnsense_info "Reset Password" "Password reset completed"
 	else
