@@ -2,7 +2,7 @@
 #-
 # Copyright (c) 2011 Nathan Whitehorn
 # Copyright (c) 2013-2018 Devin Teske
-# Copyright (c) 2019-2021 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2019-2022 Franco Fichtner <franco@opnsense.org>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -346,8 +346,8 @@ finalconfig() {
 	REVISIT=$(dialog --backtitle "OPNsense Installer" \
 	    --title "Final Configuration" --no-cancel --menu \
 	    "Setup of your ${PRODUCT_NAME} system is nearly complete. You can now modify your configuration choices." 0 0 0 \
-		"Exit" "Apply configuration and exit installer" \
-		"Root Password" "Change root password" 2>&1 1>&3)
+		"Root Password" "Change root password" \
+		"Exit" "Apply configuration and exit installer" 2>&1 1>&3)
 	exec 3>&-
 
 	case "$REVISIT" in
