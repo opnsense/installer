@@ -92,6 +92,7 @@ bsdinstall scriptedpart ${DISK} gpt { ${SIZE_EFI} efi, ${SIZE_BOOT} freebsd-boot
 
 gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 2 ${DISK} > /dev/null || fatal "GPT boot partition write failed"
 
+# XXX we should suffix the labels with a unique number
 gpart modify -i 1 -l efifs ${DISK} > /dev/null || fatal "Disk label failed (efi)"
 gpart modify -i 2 -l bootfs ${DISK} > /dev/null || fatal "Disk label failed (boot)"
 gpart modify -i 3 -l rootfs ${DISK} > /dev/null || fatal "Disk label failed (root)"
