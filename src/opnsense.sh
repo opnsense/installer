@@ -273,11 +273,13 @@ exec 3>&-
 
 case "${CHOICE}" in
 "Install (UFS)")
+	export WORKAROUND_HYBRID=1
 	bsdinstall opnsense-ufs || error "Partitioning error"
 	bsdinstall mount || error "Failed to mount filesystem"
 	break
 	;;
 "Install (ZFS)")
+	export WORKAROUND_HYBRID=1
 	bsdinstall opnsense-zfs || error "Partitioning error"
 	bsdinstall mount || error "Failed to mount filesystem"
 	break
