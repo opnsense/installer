@@ -349,7 +349,7 @@ finalconfig() {
 	    --title "Final Configuration" --no-cancel --menu \
 	    "Setup of your ${PRODUCT_NAME} system is nearly complete." 0 0 0 \
 		"Root Password" "Change root password" \
-		"Exit Installer" "Exit and reboot now" 2>&1 1>&3)
+		"Complete Install" "Exit and reboot" 2>&1 1>&3)
 	exec 3>&-
 
 	case "$REVISIT" in
