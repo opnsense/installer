@@ -164,12 +164,13 @@ ALL=90
 
 progress "${@}"
 
-cp ${LOGFILE} ${BSDINSTALL_CHROOT}${LOGFILE}
+if ! (mount -t devfs devfs ${BSDINSTALL_CHROOT}/dev 2>&1) >> ${LOGFILE}; then
+	fatal
+fi
 
-sync
-
-(mount -t devfs devfs ${BSDINSTALL_CHROOT}/dev 2>&1) >> ${LOGFILE}
-(chroot ${BSDINSTALL_CHROOT} /bin/sh /etc/rc.d/ldconfig start 2>&1) >> ${LOGFILE}
+if ! (chroot ${BSDINSTALL_CHROOT} /bin/sh /etc/rc.d/ldconfig start 2>&1) >> ${LOGFILE}; then
+	fatal
+fi
 
 cp ${BSDINSTALL_TMPETC}/fstab ${BSDINSTALL_CHROOT}/etc
 
@@ -177,7 +178,13 @@ mkdir -p ${BSDINSTALL_CHROOT}/tmp
 chmod 1777 ${BSDINSTALL_CHROOT}/tmp
 
 # /boot/loader.conf et al
-(chroot ${BSDINSTALL_CHROOT} /usr/local/sbin/pluginctl -s login restart 2>&1) >> ${LOGFILE}
+if ! (chroot ${BSDINSTALL_CHROOT} /usr/local/sbin/pluginctl -s login restart 2>&1) >> ${LOGFILE}; then
+	fatal
+fi
+
+cp ${LOGFILE} ${BSDINSTALL_CHROOT}${LOGFILE}
+
+sync
 
 ALL=100
 BOOT=Completed
