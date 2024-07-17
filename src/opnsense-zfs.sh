@@ -25,6 +25,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+#
 ############################################################ INCLUDES
 
 BSDCFG_SHARE="/usr/share/bsdconfig"
@@ -41,6 +42,11 @@ f_include $BSDCFG_SHARE/variable.subr
 # Default name of the boot-pool
 #
 : ${ZFSBOOT_POOL_NAME:=zroot}
+
+#
+# Default pool size is optional
+#
+: ${ZFSBOOT_POOL_SIZE=}
 
 #
 # Default options to use when creating zroot pool
@@ -143,14 +149,14 @@ f_isset ZFSBOOT_DATASETS || ZFSBOOT_DATASETS="
 	/$ZFSBOOT_BEROOT_NAME				mountpoint=none
 	/$ZFSBOOT_BEROOT_NAME/$ZFSBOOT_BOOTFS_NAME	mountpoint=/
 
+	# Home directories separated so they are common to all BEs
+	/home		mountpoint=/home
+
 	# Compress /tmp, allow exec but not setuid
 	/tmp		mountpoint=/tmp,exec=on,setuid=off
 
 	# Don't mount /usr so that 'base' files go to the BEROOT
 	/usr		mountpoint=/usr,canmount=off
-
-	# Home directories separated so they are common to all BEs
-	/usr/home	# NB: /home is a symlink to /usr/home
 
 	# Ports tree
 	/usr/ports	setuid=off
@@ -251,7 +257,7 @@ msg_encrypt_disks_help="Use geli(8) to encrypt all data partitions"
 msg_error="Error"
 msg_force_4k_sectors="Force 4K Sectors?"
 msg_force_4k_sectors_help="Align partitions to 4K sector boundries and set vfs.zfs.min_auto_ashift=12"
-msg_freebsd_installer="OPNsense Installer"
+msg_freebsd_installer="$OSNAME Installer"
 msg_geli_password="Enter a strong passphrase, used to protect your encryption keys. You will be required to enter this passphrase each time the system is booted"
 msg_geli_setup="Initializing encryption on selected disks,\n this will take several seconds per disk"
 msg_install="Install"
@@ -260,6 +266,7 @@ msg_install_help="Create ZFS boot pool with displayed options"
 msg_invalid_boot_pool_size="Invalid boot pool size \`%s'"
 msg_invalid_disk_argument="Invalid disk argument \`%s'"
 msg_invalid_index_argument="Invalid index argument \`%s'"
+msg_invalid_pool_size="Invalid pool size \`%s'"
 msg_invalid_swap_size="Invalid swap size \`%s'"
 msg_invalid_virtual_device_type="Invalid Virtual Device type \`%s'"
 msg_last_chance_are_you_sure="Last Chance! Are you sure you want to destroy\nthe current contents of the following disks:\n\n   %s"
@@ -310,7 +317,7 @@ msg_swap_mirror="Mirror Swap?"
 msg_swap_mirror_help="Mirror swap partitions for redundancy, breaks crash dumps"
 msg_swap_size="Swap Size"
 msg_swap_size_help="Customize how much swap space is allocated to each selected disk"
-msg_swap_toosmall="The selected swap size (%s) is to small. Please enter a value greater than 100MB or enter 0 for no swap"
+msg_swap_toosmall="The selected swap size (%s) is too small. Please enter a value greater than 100MB or enter 0 for no swap"
 msg_these_disks_are_too_small="These disks are smaller than the amount of requested\nswap (%s) and/or geli(8) (%s) partitions, which would\ntake 100%% or more of each of the following selected disks:\n\n  %s\n\nRecommend changing partition size(s) and/or selecting a\ndifferent set of disks."
 msg_unable_to_get_disk_capacity="Unable to get disk capacity of \`%s'"
 msg_unsupported_partition_scheme="%s is an unsupported partition scheme"
@@ -524,6 +531,15 @@ dialog_menu_layout()
 		new_list="$new_list $disk"
 	done
 	disks="${new_list# }"
+
+	# Prune out disks that are not available to install to
+	local avail_disks=
+	for disk in $disks; do
+		debug= $disk get name name
+		geom disk list $name | awk '$1 == "Mode:" && $2 != "r0w0e0" { exit 1 }'
+		[ $? -eq 0 ] && avail_disks="$avail_disks $disk"
+	done
+	disks="${avail_disks# }"
 
 	# Debugging
 	if [ "$debug" ]; then
@@ -941,9 +957,15 @@ zfs_create_diskpart()
 		#
 		# 4. Add freebsd-zfs partition labeled `zfs#' for zroot
 		#
-		f_eval_catch $funcname gpart "$GPART_ADD_ALIGN_LABEL" \
-		             "$align_big" zfs$index freebsd-zfs $disk ||
-		             return $FAILURE
+		if [ "$ZFSBOOT_POOL_SIZE" ]; then
+			f_eval_catch $funcname gpart "$GPART_ADD_ALIGN_LABEL_WITH_SIZE" \
+					"$align_big" zfs$index freebsd-zfs $ZFSBOOT_POOL_SIZE $disk ||
+					return $FAILURE
+		else
+			f_eval_catch $funcname gpart "$GPART_ADD_ALIGN_LABEL" \
+					"$align_big" zfs$index freebsd-zfs $disk ||
+					return $FAILURE
+		fi
 		f_eval_catch -d $funcname zpool "$ZPOOL_LABELCLEAR_F" \
 		                /dev/$disk$targetpart
 		;;
@@ -1018,9 +1040,13 @@ zfs_create_diskpart()
 		#
 		# 5. Add freebsd-zfs partition for zroot
 		#
-		f_eval_catch $funcname gpart "$GPART_ADD_ALIGN_INDEX" \
-		             "$align_small" $mbrindex freebsd-zfs ${disk}s1 ||
-		             return $FAILURE
+		if [ "$ZFSBOOT_POOL_SIZE" ]; then
+			f_eval_catch $funcname gpart "$GPART_ADD_ALIGN_INDEX_WITH_SIZE" \
+					"$align_small" $mbrindex freebsd-zfs $ZFSBOOT_POOL_SIZE ${disk}s1 || return $FAILURE
+		else
+			f_eval_catch $funcname gpart "$GPART_ADD_ALIGN_INDEX" \
+					"$align_small" $mbrindex freebsd-zfs ${disk}s1 || return $FAILURE
+		fi
 		f_eval_catch -d $funcname zpool "$ZPOOL_LABELCLEAR_F" \
 		                /dev/$disk$targetpart # Pedantic
 		f_eval_catch $funcname dd "$DD_WITH_OPTIONS" \
@@ -1034,9 +1060,9 @@ zfs_create_diskpart()
 	local swapsize
 	f_expand_number "$ZFSBOOT_SWAP_SIZE" swapsize
 	if [ "$isswapmirror" ]; then
-		# This is not the first disk in the mirror, do nothing
+		: # This is not the first disk in the mirror, do nothing
 	elif [ ${swapsize:-0} -eq 0 ]; then
-		# If swap is 0 sized, don't add it to fstab
+		: # If swap is 0 sized, don't add it to fstab
 	elif [ "$ZFSBOOT_SWAP_ENCRYPTION" -a "$ZFSBOOT_SWAP_MIRROR" ]; then
 		f_eval_catch $funcname printf "$PRINTF_FSTAB" \
 		             /dev/mirror/swap.eli none swap sw 0 0 \
@@ -1112,7 +1138,7 @@ zfs_create_boot()
 	# Expand SI units in desired sizes
 	#
 	f_dprintf "$funcname: Expanding supplied size values..."
-	local swapsize bootsize
+	local swapsize bootsize poolsize
 	if ! f_expand_number "$ZFSBOOT_SWAP_SIZE" swapsize; then
 		f_dprintf "$funcname: Invalid swap size \`%s'" \
 		          "$ZFSBOOT_SWAP_SIZE"
@@ -1125,6 +1151,16 @@ zfs_create_boot()
 		f_show_err "$msg_invalid_boot_pool_size" \
 		           "$ZFSBOOT_BOOT_POOL_SIZE"
 		return $FAILURE
+	fi
+	if [ "$ZFSBOOT_POOL_SIZE" ]; then
+		if ! f_expand_number "$ZFSBOOT_POOL_SIZE" poolsize; then
+			f_dprintf "$funcname: Invalid pool size \`%s'" \
+				  "$ZFSBOOT_POOL_SIZE"
+			f_show_err "$msg_invalid_pool_size" \
+				   "$ZFSBOOT_POOL_SIZE"
+		fi
+		f_dprintf "$funcname: ZFSBOOT_POOL_SIZE=[%s] poolsize=[%s]" \
+			  "$ZFSBOOT_POOL_SIZE" "$poolsize"
 	fi
 	f_dprintf "$funcname: ZFSBOOT_SWAP_SIZE=[%s] swapsize=[%s]" \
 	          "$ZFSBOOT_SWAP_SIZE" "$swapsize"
@@ -1436,9 +1472,18 @@ zfs_create_boot()
 	# Set canmount=noauto so that the default Boot Environment (BE) does
 	# not get mounted if a different BE is selected from the beastie menu
 	#
-	f_dprintf "$funcname: Set canmount=noauto for the root of the pool..."
-	f_eval_catch $funcname zfs "$ZFS_SET" "canmount=noauto" \
-		"$zroot_name/$ZFSBOOT_BEROOT_NAME/$ZFSBOOT_BOOTFS_NAME"
+	f_dprintf "$funcname: Set canmount=noauto for any datasets under the BE..."
+	echo "$ZFSBOOT_DATASETS" | while read dataset options; do
+		# Skip blank lines and comments
+		case "$dataset" in "#"*|"") continue; esac
+		options="${options%%#*}"
+		#
+		case "$dataset" in "/$ZFSBOOT_BEROOT_NAME/$ZFSBOOT_BOOTFS_NAME"*)
+			f_eval_catch $funcname zfs "$ZFS_SET" "canmount=noauto" \
+				"$zroot_name$dataset" || return $FAILURE ;;
+		*) continue ;;
+		esac
+	done
 
 	# Last, but not least... required lines for rc.conf(5)/loader.conf(5)
 	# NOTE: We later concatenate these into their destination
@@ -1591,7 +1636,7 @@ for pool in ${pools}; do
 	if [ "${pool}" = "${ZFSBOOT_POOL_NAME}" ]; then
 		f_dprintf "Pool ${pool} already taken"
 		ZFSBOOT_POOL_NAME=$(dialog_zpool_name "${ZFSBOOT_POOL_NAME}")
-		break;
+		break
 	fi
 done
 
@@ -1615,16 +1660,9 @@ esac
 # Loop over the main menu until we've accomplished what we came here to do
 #
 while :; do
-	if ! f_interactive; then
-		retval=$DIALOG_OK
-		mtag=">>> $msg_install"
-	else
-		retval=$DIALOG_OK
-		mtag=">>> $msg_install"
-		#dialog_menu_main
-		#retval=$?
-		#f_dialog_menutag_fetch mtag
-	fi
+	# We set default swap so skip menu
+	retval=$DIALOG_OK
+	mtag=">>> $msg_install"
 
 	f_dprintf "retval=%u mtag=[%s]" $retval "$mtag"
 	[ $retval -eq $DIALOG_OK ] || f_die
@@ -1652,7 +1690,11 @@ while :; do
 		   f_expand_number "$ZFSBOOT_BOOT_POOL_SIZE" bootsize &&
 		   f_expand_number "1g" zpoolmin
 		then
-			minsize=$(( $swapsize + $zpoolmin )) teeny_disks=
+			minsize=$swapsize teeny_disks=
+			if [ "$ZFSBOOT_POOL_SIZE" ]; then
+				f_expand_number "$ZFSBOOT_POOL_SIZE" poolsize
+				minsize=$(( $minsize + $poolsize ))
+			fi
 			[ "$ZFSBOOT_BOOT_POOL" ] &&
 				minsize=$(( $minsize + $bootsize ))
 			for disk in $ZFSBOOT_DISKS; do
@@ -1772,14 +1814,14 @@ while :; do
 			if [ $swapsize -ne 0 -a $swapsize -lt 104857600 ]; then
 			    f_show_err "$msg_swap_toosmall" \
 				       "$ZFSBOOT_SWAP_SIZE"
-			    continue;
+			    continue
 			else
-			    break;
+			    break
 			fi
 		    else
 			f_show_err "$msg_swap_invalid" \
 				   "$ZFSBOOT_SWAP_SIZE"
-			continue;
+			continue
 		    fi
 		done
 		;;
