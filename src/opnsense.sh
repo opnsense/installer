@@ -256,8 +256,8 @@ PMODES="\
 ${PMODESZFS}Manual \"Manual Disk Setup (experts)\""
 
 CHOICES="\
-\"Install (UFS)\" \"UFS GPT/UEFI Hybrid\" \
-${CHOICESZFS}\"Other Modes >>\" \"Extended Installation\" \
+${CHOICESZFS}\"Install (UFS)\" \"UFS GPT/UEFI Hybrid\" \
+\"Other Modes >>\" \"Extended Installation\" \
 \"Import Config\" \"Load Configuration\" \
 \"Password Reset\" \"Recover Installation\" \
 \"Force Reboot\" \"Reboot System\""
