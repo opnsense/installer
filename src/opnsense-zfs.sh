@@ -1615,6 +1615,13 @@ dialog_zpool_name()
 ############################################################ MAIN
 
 #
+# OPNsense memory check
+#
+. /usr/libexec/bsdinstall/opnsense.subr || exit 1
+
+opnsense_check_memory ZFS
+
+#
 # Initialize
 #
 f_dialog_title "$msg_zfs_configuration"

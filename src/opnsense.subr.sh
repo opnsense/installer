@@ -32,6 +32,26 @@ SIZE_SWAPMIN=$((30 * 1024 * 1024 * 1024))
 
 OPNSENSE_IMPORTER="/usr/local/sbin/opnsense-importer"
 
+opnsense_check_memory()
+{
+	TYPE=${1}
+
+	MEM=$(sysctl -n hw.realmem)
+	MEM=$((MEM / 1024 / 1024))
+	MEM_MIN=$((3 * 1000)) # a little lower to account for missing pages
+
+	if [ ${MEM} -lt ${MEM_MIN} ]; then
+		if ! dialog --backtitle "OPNsense Installer" --title "${TYPE} Configuration" \
+		    --yes-label "Proceed anyway" --no-label "Cancel" --yesno \
+		    "The installer detected only ${MEM}MB of RAM. Since\n
+	this is a live image, copying the full file system\n
+	to another disk requires at least ${MEM_MIN}MB of RAM\n
+	and is generally advised for good operation." 0 0; then
+			exit 1
+		fi
+	fi
+}
+
 opnsense_load_disks()
 {
 	OPNSENSE_SDISKS=
