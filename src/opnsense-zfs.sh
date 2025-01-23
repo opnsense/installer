@@ -696,10 +696,11 @@ dialog_menu_layout()
 				--title \"\$DIALOG_TITLE\"         \
 				--backtitle \"\$DIALOG_BACKTITLE\" \
 				--separate-output                  \
-				--hline \"\$hline\"                \
+				--hline \"\$disk_hline\"           \
 				--ok-label \"\$msg_ok\"            \
 				--cancel-label \"\$msg_back\"      \
 				--checklist \"\$prompt\"           \
+				--menu \"\$disk_prompt\"           \
 				$height $width $rows               \
 				$disk_check_list                   \
 				2>&1 >&$DIALOG_TERMINAL_PASSTHRU_FD
