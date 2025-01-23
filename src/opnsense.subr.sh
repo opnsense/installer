@@ -44,9 +44,9 @@ opnsense_check_memory()
 		if ! dialog --backtitle "OPNsense Installer" --title "${TYPE} Configuration" \
 		    --yes-label "Proceed anyway" --no-label "Cancel" --yesno \
 		    "The installer detected only ${MEM}MB of RAM. Since\n
-	this is a live image, copying the full file system\n
-	to another disk requires at least ${MEM_MIN}MB of RAM\n
-	and is generally advised for good operation." 0 0; then
+this is a live image, copying the full file system\n
+to another disk requires at least ${MEM_MIN}MB of RAM\n
+and is generally advised for good operation." 0 0; then
 			exit 1
 		fi
 	fi
