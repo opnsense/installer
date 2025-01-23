@@ -696,6 +696,7 @@ dialog_menu_layout()
 				--title \"\$DIALOG_TITLE\"         \
 				--backtitle \"\$DIALOG_BACKTITLE\" \
 				--separate-output                  \
+				--hline \"\$disk_hline\"           \
 				--ok-label \"\$msg_ok\"            \
 				--cancel-label \"\$msg_back\"      \
 				--checklist \"\$prompt\"           \
