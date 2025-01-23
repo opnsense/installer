@@ -331,6 +331,7 @@ case "${CHOICE}" in
 	exit 0 # "this is fine"
 	;;
 "Force Halt")
+	break; # XXX testing spot
 	exit 42 # "bring a towel"
 	;;
 *)
@@ -344,11 +345,11 @@ powerconfig() {
 	exec 3>&1
 	REVISIT=$(dialog --backtitle "OPNsense Installer" \
 	    --title "Installation Complete" --no-cancel --menu \
-	    "Choose how to proceed with your fresh ${PRODUCT_NAME} installation.\n
+	    "Choose how to proceed with this new install.\n
 \n
-Please eject your installation media to avoid booting back into it." 0 0 0 \
+Note: The system may boot back into the installation media when not ejected properly." 0 0 0 \
 		"Reboot now" "Reboot system" \
-		"Halt now" "Power down system\"" 2>&1 1>&3)
+		"Halt now" "Power down system" 2>&1 1>&3)
 	exec 3>&-
 
 	case "$REVISIT" in
