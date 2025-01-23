@@ -689,7 +689,7 @@ dialog_menu_layout()
 			done
 
 			eval f_dialog_checklist_size height width rows \
-				\"\$title\" \"\$btitle\" \"\$prompt\" \
+				\"\$title\" \"\$btitle\" \"\$disk_prompt\" \
 				\"\$disk_hline\" $disk_check_list
 
 			selections=$( eval $DIALOG \
@@ -699,7 +699,7 @@ dialog_menu_layout()
 				--hline \"\$disk_hline\"           \
 				--ok-label \"\$msg_ok\"            \
 				--cancel-label \"\$msg_back\"      \
-				--checklist \"\$prompt\"           \
+				--checklist \"\$disk_prompt\"      \
 				$height $width $rows               \
 				$disk_check_list                   \
 				2>&1 >&$DIALOG_TERMINAL_PASSTHRU_FD
