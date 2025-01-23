@@ -340,6 +340,26 @@ esac
 
 done
 
+powerconfig() {
+	exec 3>&1
+	REVISIT=$(dialog --backtitle "OPNsense Installer" \
+	    --title "Installation Complete" --no-cancel --menu \
+	    "Choose how to proceed with your fresh ${PRODUCT_NAME} installation.\n
+\n
+Please eject your installation media to avoid booting back into it." 0 0 0 \
+		"Reboot now" "Reboot system" \
+		"Halt now" "Power down system\"" 2>&1 1>&3)
+	exec 3>&-
+
+	case "$REVISIT" in
+	"Halt now")
+		exit 42 # "bring a towel"
+		;;
+	esac
+}
+
+powerconfig # XXX testing spot
+
 bsdinstall opnsense-install || error "Failed to install"
 
 # Set up boot loader
@@ -353,7 +373,7 @@ finalconfig() {
 	    --title "Final Configuration" --no-cancel --menu \
 	    "Setup of your ${PRODUCT_NAME} system is nearly complete." 0 0 0 \
 		"Root Password" "Change root password" \
-		"Complete Install" "Exit and reboot" 2>&1 1>&3)
+		"Complete Install" "Confirm and exit" 2>&1 1>&3)
 	exec 3>&-
 
 	case "$REVISIT" in
