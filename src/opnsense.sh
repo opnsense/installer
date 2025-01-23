@@ -260,7 +260,8 @@ ${CHOICESZFS}\"Install (UFS)\" \"UFS GPT/UEFI Hybrid\" \
 \"Other Modes >>\" \"Extended Installation\" \
 \"Import Config\" \"Load Configuration\" \
 \"Password Reset\" \"Recover Installation\" \
-\"Force Reboot\" \"Reboot System\""
+\"Force Reboot\" \"Reboot System\" \
+\"Force Halt\" \"Power Down System\""
 
 while :; do
 
@@ -328,6 +329,9 @@ case "${CHOICE}" in
 	;;
 "Force Reboot")
 	exit 0 # "this is fine"
+	;;
+"Force Halt")
+	exit 42 # "bring a towel"
 	;;
 *)
 	error "Unknown installer mode"
