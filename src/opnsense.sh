@@ -331,7 +331,6 @@ case "${CHOICE}" in
 	exit 0 # "this is fine"
 	;;
 "Force Halt")
-	break; # XXX testing spot
 	exit 42 # "bring a towel"
 	;;
 *)
@@ -340,26 +339,6 @@ case "${CHOICE}" in
 esac
 
 done
-
-powerconfig() {
-	exec 3>&1
-	REVISIT=$(dialog --backtitle "OPNsense Installer" \
-	    --title "Installation Complete" --no-cancel --menu \
-	    "Choose how to proceed with this new install.\n
-\n
-Note: The system may boot back into the installation media when not ejected properly." 0 0 0 \
-		"Reboot now" "Reboot system" \
-		"Halt now" "Power down system" 2>&1 1>&3)
-	exec 3>&-
-
-	case "$REVISIT" in
-	"Halt now")
-		exit 42 # "bring a towel"
-		;;
-	esac
-}
-
-powerconfig # XXX testing spot
 
 bsdinstall opnsense-install || error "Failed to install"
 
@@ -400,6 +379,25 @@ bsdinstall entropy
 bsdinstall umount
 
 f_dprintf "Installation Completed at %s" "$( date )"
+
+powerconfig() {
+	exec 3>&1
+	REVISIT=$(dialog --backtitle "OPNsense Installer" \
+	    --title "Installation Complete" --no-cancel --menu \
+	    "The system may boot back into the installation media when not ejected properly." 0 0 0 \
+		"Reboot now" "Reboot system" \
+		"Halt now" "Power down system" 2>&1 1>&3)
+	exec 3>&-
+
+	case "$REVISIT" in
+	"Halt now")
+		exit 42 # "bring a towel"
+		;;
+	esac
+}
+
+# And we are done!
+powerconfig
 
 ################################################################################
 # END
